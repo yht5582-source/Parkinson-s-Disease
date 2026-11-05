@@ -545,7 +545,7 @@ ol.refs a{color:var(--accent)}
         </ol>
       </div>
     </div>
-    <p class="disclaimer">本工具為臨床決策輔助與教學用途，示範病例皆為虛構，建議內容依據上述指引歸納，不能取代醫師對個別患者的完整評估。藥物劑量、禁忌與交互作用請以仿單及院內處方集為準。版本 v2.2（2026-11-05）。</p>
+    <p class="disclaimer">本工具為臨床決策輔助與教學用途，示範病例皆為虛構，建議內容依據上述指引歸納，不能取代醫師對個別患者的完整評估。藥物劑量、禁忌與交互作用請以仿單及院內處方集為準。版本 v2.2.1（2026-11-05）。</p>
   </section>
 
   <!-- ============ 5. Cases ============ -->
@@ -646,6 +646,19 @@ const PDE=(()=>{
     if(f&&r.ld>0)r.ld=round25(r.ld*f);
     return r;
   }
+  /* stop the agonist and replace its LEDD with levodopa: more doses first (interval >=3 h over at least 12 h),
+     the single dose only moves as far as needed; with peak-dose dyskinesia it is never raised */
+  function replaceAgonist(r,noPeakRise){
+    if(!DA[r.da])return r;
+    const led=r.dadose*DA[r.da].f;
+    r.da='none';r.dadose=0;
+    if(r.n<=0||r.ld<=0)return r;
+    const target=r.ld*r.n+led,span=Math.max(12,r.int*(r.n-1)),n=Math.max(r.n,Math.min(8,Math.floor(span/3)+1));
+    if(n>r.n)r.int=clamp(Math.round(span/(n-1)*2)/2,2.5,8);
+    const ld=round25(target/n);
+    r.n=n;r.ld=noPeakRise?Math.min(r.ld,ld):ld;
+    return r;
+  }
   const amMax=e=>e==='s'?0:e==='m'?100:300;
   /* limits that can be broken by either regimen */
   function regWarnings(r,pt){
@@ -702,7 +715,7 @@ const PDE=(()=>{
     o.sort((a,b)=>b.s-a.s);
     return o.map(x=>({...x,label:x.s>=5?'首選':x.s>=2?'可選':'不建議'}));
   }
-  return{clamp,round25,DA,MAOB,T0,normalize,switchDA,ledd,therapeuticWindow,doseTimes,inDay,simulate,fmtT,fractionate,amMax,regWarnings,dxClass,initRank};
+  return{clamp,round25,DA,MAOB,T0,normalize,switchDA,ledd,therapeuticWindow,doseTimes,inDay,simulate,fmtT,fractionate,replaceAgonist,amMax,regWarnings,dxClass,initRank};
 })();
 if(typeof module!=='undefined')module.exports=PDE;
 /*ENGINE-END*/
@@ -1152,8 +1165,8 @@ function buildRecs(){
 
   if(has('icd')){
     out.push({id:'icd',st:[
-      {lv:'go',t:'減量或停用多巴胺致效劑',ev:EV19,d:`${c.da!=='none'?`目前 ${DA_INFO[c.da].n} ${c.dadose} mg/日。`:''}最有效的處置。<b>需逐步減量</b>，留意致效劑戒斷症候群（焦慮、憂鬱、疼痛、自主神經症狀）；必要時以 levodopa 補足動作症狀。`,
-        a:c.da!=='none'?A('套用：停致效劑、levodopa 補 LEDD',r=>{if(!DA_INFO[r.da])return;const led=r.dadose*DA_INFO[r.da].f;r.da='none';r.dadose=0;if(r.n>0)r.ld=round25(r.ld+led*0.6/r.n);}):null},
+      {lv:'go',t:'減量或停用多巴胺致效劑',ev:EV19,d:`${c.da!=='none'?`目前 ${DA_INFO[c.da].n} ${c.dadose} mg/日。`:''}最有效的處置。<b>需逐步減量</b>，留意致效劑戒斷症候群（焦慮、憂鬱、疼痛、自主神經症狀）；必要時以 levodopa 補足動作症狀，優先增加次數，不只加大單次劑量；「套用」顯示的是終點處方。`,
+        a:c.da!=='none'?A('套用：停致效劑、levodopa 少量多次補足',r=>PDE.replaceAgonist(r,has('pdk'))):null},
       {lv:'go',t:'家屬參與與監督',d:'與照顧者確認賭博、購物、性行為、飲食、刻板重複行為（punding）；財務與網路消費管控。'},
       {lv:'consider',t:'認知行為治療',ev:EV19,d:'「可能有用」。Amantadine 治療 ICD 證據不足。另需警覺 levodopa 過度使用（多巴胺失調症候群）。'}
     ]});

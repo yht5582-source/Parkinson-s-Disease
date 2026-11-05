@@ -177,6 +177,34 @@ t('case regimens are already within input limits', () => CASES.filter(c => c.sim
   assert(!E.regWarnings(c.sim[r], c.sim.pt).some(x => x.t.includes('就寢')));
 })));
 
+// --- stop-agonist button
+t('case 5: replacing the agonist gives the regimen the case recommends', () => {
+  const c = cs(5); assert.deepEqual(E.normalize(E.replaceAgonist({ ...c.sim.cur }, false)), c.sim.prop);
+});
+t('replaceAgonist: LEDD preserved within one rounding step', () => {
+  const r = reg({ da: 'rop', dadose: 8 }), before = E.ledd(r);
+  E.replaceAgonist(r, false); assert.equal(r.da, 'none'); assert.equal(r.dadose, 0);
+  assert(Math.abs(E.ledd(r) - before) <= 25 * r.n, `${before} ${E.ledd(r)}`);
+});
+t('replaceAgonist: adds doses and ends before bedtime', () => {
+  const r = E.replaceAgonist(reg({ n: 3, int: 5, da: 'prx', dadose: 3 }), false);
+  assert(r.n > 3); assert(r.int >= 2.5); assert(r.first + r.int * (r.n - 1) <= 23);
+});
+t('replaceAgonist: peak-dose dyskinesia never raises the single dose', () => {
+  const r = E.replaceAgonist(reg({ ld: 200, n: 4, da: 'prx', dadose: 3 }), true);
+  assert(r.ld <= 200); assert.equal(r.n, 5);
+});
+t('replaceAgonist: no agonist, no change', () => { const r = reg(); assert.deepEqual(E.replaceAgonist({ ...r }, false), r); });
+t('replaceAgonist: no levodopa keeps zero doses, finite interval', () => {
+  const r = E.replaceAgonist(reg({ ld: 0, n: 0, da: 'rop', dadose: 8 }), false);
+  assert.equal(r.n, 0); assert.equal(r.ld, 0); assert.equal(r.da, 'none'); assert(isFinite(r.int));
+});
+t('replaceAgonist: 8 doses stay at 8', () => assert.equal(E.replaceAgonist(reg({ n: 8, int: 2, da: 'rop', dadose: 4 }), false).n, 8));
+t('replaceAgonist: case 5 OFF far below the old single-dose-only result', () => {
+  const c = cs(5), p = E.replaceAgonist({ ...c.sim.cur }, false);
+  assert(E.simulate(p, 6, 7, 23).off < 2);
+});
+
 // --- quiz
 const qz = id => QUIZ.find(q => q.id === id);
 t('20 questions, 10 basic + 10 advanced', () => {
