@@ -11,12 +11,18 @@
 3. **運動併發症調整模擬器**：輸入目前處方與狀況（wearing-off、異動症、幻覺等），產生階梯式調藥建議，可一鍵套用並以 24 小時示意曲線比較調整前後；含 LEDD 計算與 5-2-1 進階治療篩檢。
 4. **LEDD 換算與文獻**。
 
+## 開發
+
+計算邏輯集中在 `index.html` 的 `/*ENGINE-START*/ … /*ENGINE-END*/` 區塊（`PDE`），測試：`node tests.cjs`。
+
 ## 主要依據
 
 - Postuma RB, et al. MDS clinical diagnostic criteria for Parkinson's disease. *Mov Disord* 2015.
 - Fox SH, et al. MDS EBM review: update on treatments for the motor symptoms of PD. *Mov Disord* 2018. doi:10.1002/mds.27372
 - Seppi K, et al. Update on treatments for nonmotor symptoms of PD. *Mov Disord* 2019.
 - Tomlinson CL, et al. 2010；Jost ST, et al. 2023（LEDD 換算）. doi:10.1002/mds.29410
+- de Bie RMA, et al. MDS EBM review: motor fluctuations. *Mov Disord* 2025. doi:10.1002/mds.30162
+- Pringsheim T, et al. AAN guideline: early PD. *Neurology* 2021. doi:10.1212/WNL.0000000000012868
 - 台灣動作障礙學會相關共識
 
 ## 免責聲明

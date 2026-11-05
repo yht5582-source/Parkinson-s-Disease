@@ -3,33 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="巴金森病診斷流程（MDS 2015）、起始治療排序與運動併發症調藥模擬器，依 MDS EBM 與台灣動作障礙學會共識整理。">
+<meta name="description" content="巴金森病診斷流程（MDS 2015）、起始治療排序與運動併發症調藥模擬器，依 MDS EBM（含 2025 運動波動更新）、AAN 2021 與台灣動作障礙學會共識整理。">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>巴金森病治療決策台</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d5d70'/%3E%3Cpath d='M4 20c3 0 3-9 6-9s3 11 6 11 3-15 6-15 3 13 6 13' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: clinical console — masthead + tabbed workspaces; simulator = input rail (left) + pharmacokinetic chart & stepped recommendations (right) */
 :root{
-  --paper:#f4f6f4; --panel:#ffffff; --ink:#15201c; --ink-2:#4b5a54; --ink-3:#7a8a83; --line:#d6ddd9; --line-2:#e8ecea;
+  --paper:#f4f6f4; --panel:#ffffff; --ink:#15201c; --ink-2:#4b5a54; --ink-3:#5f6f68; --line:#d6ddd9; --line-2:#e8ecea;
   --accent:#1d5d70; --accent-ink:#ffffff; --accent-soft:#e2eef1;
   --on:#2e7a4d; --on-soft:#e3f1e8;
-  --off:#b4492f; --off-soft:#f8e6e0;
+  --off:#a53f27; --off-soft:#f8e6e0;
   --dysk:#76489f; --dysk-soft:#efe6f7;
-  --warn:#9a6a0c; --warn-soft:#fbf1dc;
+  --warn:#855a07; --warn-soft:#fbf1dc;
   --night:rgba(21,32,28,.05);
   --f-display:"Noto Serif TC","Songti TC","PMingLiU",serif;
   --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --paper:#0f1513; --panel:#161e1b; --ink:#e4ebe7; --ink-2:#a3b3ac; --ink-3:#74857e; --line:#2a3531; --line-2:#1f2926;
+  --paper:#0f1513; --panel:#161e1b; --ink:#e4ebe7; --ink-2:#a3b3ac; --ink-3:#8c9c95; --line:#2a3531; --line-2:#1f2926;
   --accent:#6db2c6; --accent-ink:#0c1a1f; --accent-soft:#1a2f36;
   --on:#63c289; --on-soft:#17291f; --off:#e8866b; --off-soft:#35201a; --dysk:#b99be4; --dysk-soft:#281f35;
   --warn:#e3b650; --warn-soft:#2e2612; --night:rgba(255,255,255,.035); color-scheme:dark }}
 :root[data-theme="dark"]{
-  --paper:#0f1513; --panel:#161e1b; --ink:#e4ebe7; --ink-2:#a3b3ac; --ink-3:#74857e; --line:#2a3531; --line-2:#1f2926;
+  --paper:#0f1513; --panel:#161e1b; --ink:#e4ebe7; --ink-2:#a3b3ac; --ink-3:#8c9c95; --line:#2a3531; --line-2:#1f2926;
   --accent:#6db2c6; --accent-ink:#0c1a1f; --accent-soft:#1a2f36;
   --on:#63c289; --on-soft:#17291f; --off:#e8866b; --off-soft:#35201a; --dysk:#b99be4; --dysk-soft:#281f35;
   --warn:#e3b650; --warn-soft:#2e2612; --night:rgba(255,255,255,.035); color-scheme:dark }
@@ -74,6 +75,7 @@ select{max-width:100%}
 .check input{margin-top:5px;accent-color:var(--accent);flex:none}
 .btn{appearance:none;font:inherit;font-size:13.5px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:500}
 .btn:hover{border-color:var(--accent)}
+.btn:disabled{cursor:default;color:var(--on);background:var(--on-soft);border-color:transparent}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .btn.ghost{background:transparent}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--paper)}
@@ -125,6 +127,7 @@ svg.chart{display:block;width:100%;min-width:560px;height:auto}
 .chart .axis{stroke:var(--line);stroke-width:1}
 .chart .thr-off{stroke:var(--off);stroke-width:1;stroke-dasharray:3 3}
 .chart .thr-dysk{stroke:var(--dysk);stroke-width:1;stroke-dasharray:3 3}
+.chart .thr-dysk-cur{stroke:var(--dysk);stroke-width:1;stroke-dasharray:1 4;opacity:.7}
 .chart .c-cur{fill:none;stroke:var(--ink-3);stroke-width:1.6;stroke-dasharray:5 4}
 .chart .c-prop{fill:none;stroke:var(--accent);stroke-width:2.4}
 .chart .dose-cur{fill:var(--ink-3)} .chart .dose-prop{fill:var(--accent)}
@@ -155,6 +158,7 @@ ol.ladder li::before{content:counter(step);font-family:var(--f-mono);font-size:1
 ol.ladder li.lv-go::before{border-color:var(--on);color:var(--on)}
 ol.ladder li.lv-avoid{opacity:.72}
 ol.ladder li.lv-avoid::before{border-color:var(--off);color:var(--off)}
+.step-t .pill{white-space:normal}
 .step-t{font-weight:700;font-size:14.5px;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
 .step-d{font-size:13.8px;color:var(--ink-2);margin-top:2px}
 .step-d b{color:var(--ink);font-weight:500}
@@ -174,7 +178,7 @@ ol.ladder li.lv-avoid::before{border-color:var(--off);color:var(--off)}
 
 /* diagnosis */
 .dx{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:18px;align-items:start}
-@media (max-width:960px){.dx{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:960px){.dx{grid-template-columns:minmax(0,1fr)}.dx .verdict{order:-1;position:static}}
 .dxstep{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px}
 .dxstep .no{font-family:var(--f-display);font-size:26px;color:var(--accent);line-height:1}
 .crit{display:grid;gap:0}
@@ -196,6 +200,7 @@ ul.plain{margin:6px 0 0;padding-left:18px;display:grid;gap:4px;font-size:14px}
 .opt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line-2)}
 .opt:last-child{border-bottom:0}
 .opt h3{font-size:16px}
+.opt>.pill{align-self:start;justify-self:end;margin-top:2px}
 .opt .why{grid-column:1/-1;font-size:13.8px;color:var(--ink-2)}
 .meter{height:6px;border-radius:3px;background:var(--line-2);grid-column:1/-1;overflow:hidden}
 .meter i{display:block;height:100%;background:var(--accent);border-radius:3px}
@@ -206,6 +211,7 @@ ul.plain{margin:6px 0 0;padding-left:18px;display:grid;gap:4px;font-size:14px}
 ol.refs{padding-left:20px;margin:0;display:grid;gap:8px;font-size:13.8px}
 ol.refs a{color:var(--accent)}
 .disclaimer{margin-top:22px;font-size:13px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:14px;max-width:90ch}
+@media (max-width:620px){input[type=number],select{font-size:16px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -217,12 +223,12 @@ ol.refs a{color:var(--accent)}
     <div class="eyebrow">Parkinson's disease · Clinical decision support</div>
     <h1>巴金森病治療決策台</h1>
     <p class="sub">依 MDS 臨床診斷標準、MDS 實證醫學回顧與台灣動作障礙學會治療共識整理的診斷流程與用藥調整工具。模擬器以示意性藥動模型呈現治療窗變化，協助討論調藥方向。</p>
-    <div class="src"><span>MDS 臨床診斷標準 2015</span><span>MDS EBM 動作症狀 2018</span><span>MDS EBM 非動作症狀 2019</span><span>LEDD：Tomlinson 2010／Jost 2023</span><span>台灣動作障礙學會</span></div>
+    <div class="src"><span>MDS 臨床診斷標準 2015</span><span>MDS EBM 動作症狀 2018</span><span>MDS EBM 非動作症狀 2019</span><span>MDS EBM 運動波動 2025</span><span>AAN 早期治療 2021</span><span>LEDD：Tomlinson 2010／Jost 2023</span><span>台灣動作障礙學會</span></div>
     <nav class="tabs" role="tablist" aria-label="功能分頁">
-      <button class="tab" role="tab" id="tab-dx" aria-controls="dx" data-t="dx"><b>1</b>診斷流程</button>
-      <button class="tab" role="tab" id="tab-init" aria-controls="init" data-t="init"><b>2</b>起始治療</button>
-      <button class="tab" role="tab" id="tab-sim" aria-controls="sim" data-t="sim"><b>3</b>運動併發症調整模擬器</button>
-      <button class="tab" role="tab" id="tab-ref" aria-controls="ref" data-t="ref"><b>4</b>LEDD 換算與文獻</button>
+      <button type="button" class="tab" role="tab" id="tab-dx" aria-controls="dx" data-t="dx"><b>1</b>診斷流程</button>
+      <button type="button" class="tab" role="tab" id="tab-init" aria-controls="init" data-t="init"><b>2</b>起始治療</button>
+      <button type="button" class="tab" role="tab" id="tab-sim" aria-controls="sim" data-t="sim"><b>3</b>運動併發症調整模擬器</button>
+      <button type="button" class="tab" role="tab" id="tab-ref" aria-controls="ref" data-t="ref"><b>4</b>LEDD 換算與文獻</button>
     </nav>
   </header>
 
@@ -284,7 +290,7 @@ ol.refs a{color:var(--accent)}
         <div class="row" style="justify-content:space-between"><h3 style="margin:0">初診患者條件</h3><span class="sample">示例</span></div>
         <div class="field"><label for="i-age">年齡</label><div class="inline"><input type="number" id="i-age" min="20" max="100" value="66"><span class="unit">歲</span></div></div>
         <div class="field"><span class="flabel">症狀對生活／工作的影響</span>
-          <div class="seg" id="i-impact"><button data-v="mild" aria-pressed="false">輕微，未影響功能</button><button data-v="func" aria-pressed="true">已影響日常或工作</button></div>
+          <div class="seg" id="i-impact"><button type="button" data-v="mild" aria-pressed="false">輕微，未影響功能</button><button type="button" data-v="func" aria-pressed="true">已影響日常或工作</button></div>
         </div>
         <div>
           <label class="check"><input type="checkbox" id="i-tremor"><span>顫抖為主要困擾</span></label>
@@ -299,14 +305,16 @@ ol.refs a{color:var(--accent)}
         <div class="card">
           <h3>起始藥物建議排序</h3>
           <div id="init-out"></div>
+          <p class="small muted" style="margin-top:8px">排序與「首選／可選／不建議」是本工具把上述臨床原則換算成分數的結果，指引本身沒有這套評分；請當作討論起點。</p>
         </div>
         <div class="card">
           <h3>所有患者皆適用</h3>
           <ul class="plain">
             <li><b>規律運動與物理治療</b>：有氧、阻力、平衡訓練；MDS EBM 2018 物理治療為「臨床有用」。</li>
             <li><b>不必刻意延後 levodopa</b>：LEAP 試驗（2019）顯示早期使用 levodopa 不加速也不延緩病程；症狀影響功能時即可開始。</li>
-            <li><b>以最低有效劑量起始</b>：異動症風險與 levodopa 劑量相關（STRIDE-PD：&gt;400 mg/日風險上升），早期宜分次、逐步調整。</li>
+            <li><b>以最低有效劑量起始</b>：異動症與 wearing-off 風險隨 levodopa 劑量上升（STRIDE-PD 依 &lt;400、400、401–600、&gt;600 mg/日 分組呈劑量依賴），早期宜分次、逐步調整。</li>
             <li><b>衛教</b>：服藥與高蛋白餐間隔、便秘處理、跌倒預防；開立多巴胺致效劑前告知衝動控制障礙與嗜睡風險，並記錄於病歷。</li>
+            <li><b>新藥 tavapadon</b>：D1/D5 部分致效劑，2026 年 9 月獲美國 FDA 核准。TEMPO-2 早期患者 26 週 MDS-UPDRS II+III 比安慰劑多改善 9.1 分，但噁心 30%，因不良事件停藥 24%（安慰劑 4%）。尚未納入上方排序，台灣可取得性請核對。</li>
             <li><b>健保</b>：各藥品給付條件（如輔助治療限用於已有運動波動者）請依最新健保藥品給付規定核對。</li>
           </ul>
         </div>
@@ -328,6 +336,8 @@ ol.refs a{color:var(--accent)}
             <div class="field"><label for="p-egfr">腎功能 eGFR</label><select id="p-egfr"><option value="n">≥ 60</option><option value="m">30–59</option><option value="s">&lt; 30</option></select></div>
             <div class="field"><label for="p-offh">日誌 OFF 時數</label><div class="inline"><input type="number" id="p-offh" min="0" max="16" step="0.5"><span class="unit">h/日</span></div></div>
             <div class="field"><label for="p-dyskh">困擾性異動時數</label><div class="inline"><input type="number" id="p-dyskh" min="0" max="16" step="0.5"><span class="unit">h/日</span></div></div>
+            <div class="field"><label for="p-wake">起床時間</label><div class="inline"><input type="number" id="p-wake" min="4" max="11" step="0.5"><span class="unit">時</span></div></div>
+            <div class="field"><label for="p-sleep">就寢時間</label><div class="inline"><input type="number" id="p-sleep" min="19" max="24" step="0.5"><span class="unit">時</span></div></div>
             <label class="check full"><input type="checkbox" id="p-icdrisk"><span>衝動控制障礙危險因子（成癮、衝動病史、年輕男性）</span></label>
           </div>
         </div>
@@ -340,7 +350,7 @@ ol.refs a{color:var(--accent)}
 
         <div class="card">
           <h3 style="justify-content:space-between">處方
-            <span class="seg" id="reg-view"><button data-v="cur" aria-pressed="true">目前</button><button data-v="prop" aria-pressed="false">調整後</button></span>
+            <span class="seg" id="reg-view"><button type="button" data-v="cur" aria-pressed="true">目前</button><button type="button" data-v="prop" aria-pressed="false">調整後</button></span>
           </h3>
           <p class="small muted" id="reg-hint" style="margin-bottom:10px"></p>
           <div class="reg-grid">
@@ -366,7 +376,7 @@ ol.refs a{color:var(--accent)}
       <div class="stack">
         <div class="card">
           <h3>24 小時治療窗模擬</h3>
-          <div class="chartbox"><svg class="chart" id="chart" viewBox="0 0 760 250" role="img" aria-label="目前與調整後處方的 levodopa 效應曲線"></svg></div>
+          <div class="chartbox"><svg class="chart" id="chart" viewBox="0 0 760 262" role="img" aria-label="目前與調整後處方的 levodopa 效應曲線"></svg></div>
           <div class="legend">
             <span><i style="border-color:var(--ink-3);border-top-style:dashed"></i>目前處方</span>
             <span><i style="border-color:var(--accent)"></i>調整後處方</span>
@@ -375,7 +385,7 @@ ol.refs a{color:var(--accent)}
             <span><span class="sw" style="background:var(--off-soft);border:1px solid var(--off)"></span>OFF 區</span>
           </div>
           <div class="kpis" style="margin-top:14px" id="kpis"></div>
-          <p class="small muted" style="margin-top:10px">教學示意模型：levodopa 半衰期約 1.5 小時，COMT 抑制劑延長半衰期，致效劑提供持續基線，治療窗隨病程變窄，amantadine 提高異動閾值。數值僅供比較方向，不代表個別患者的真實血中濃度。</p>
+          <p class="small muted" style="margin-top:10px">教學示意模型：levodopa 半衰期約 1.5 小時，COMT 抑制劑延長半衰期，致效劑提供持續基線，治療窗隨病程變窄，amantadine 提高異動閾值。OFF 與異動時數只計起床到就寢之間，睡前控釋劑在就寢時間給藥。數值僅供比較方向，不代表個別患者的真實血中濃度。</p>
         </div>
 
         <div class="card" id="alerts-card">
@@ -401,17 +411,19 @@ ol.refs a{color:var(--accent)}
           <tbody>
             <tr><td>Levodopa 速效</td><td class="n">× 1</td><td></td></tr>
             <tr><td>Levodopa 控釋 (CR/HBS)</td><td class="n">× 0.75</td><td></td></tr>
-            <tr><td>Entacapone</td><td class="n">LD × 0.33</td><td>併用之 levodopa 劑量</td></tr>
-            <tr><td>Opicapone</td><td class="n">LD × 0.5</td><td>Jost 2023</td></tr>
-            <tr><td>Pramipexole</td><td class="n">× 100</td><td>1 mg = 100 mg</td></tr>
+            <tr><td>Entacapone</td><td class="n">LD × 0.33</td><td>只計併用的 levodopa 劑量（效果約 4 小時）</td></tr>
+            <tr><td>Opicapone</td><td class="n">LD × 0.5</td><td>全日 levodopa 的 LED（Jost 2023）</td></tr>
+            <tr><td>Pramipexole</td><td class="n">× 100</td><td>以鹽基計（salt）；以游離鹼（base）計為 × 142.86（Jost 2023）</td></tr>
             <tr><td>Ropinirole</td><td class="n">× 20</td><td>1 mg = 20 mg</td></tr>
-            <tr><td>Rotigotine</td><td class="n">× 30</td><td>1 mg = 30 mg</td></tr>
+            <tr><td>Rotigotine</td><td class="n">× 30</td><td>Tomlinson 2010；Jost 2023 為 × 30.3</td></tr>
             <tr><td>Rasagiline</td><td class="n">× 100</td><td>1 mg = 100 mg</td></tr>
             <tr><td>Selegiline（口服）</td><td class="n">× 10</td><td>10 mg = 100 mg</td></tr>
-            <tr><td>Safinamide</td><td class="n">100 mg = 150</td><td>Jost 2023 提案，使用前請核對原文</td></tr>
+            <tr><td>Safinamide</td><td class="n">固定 150</td><td>50 與 100 mg/日 皆換算為 150 mg（Jost 2023）</td></tr>
             <tr><td>Amantadine</td><td class="n">× 1</td><td></td></tr>
             <tr><td>Apomorphine</td><td class="n">× 10</td><td></td></tr>
             <tr><td>Levodopa 腸道凝膠 (LCIG)</td><td class="n">× 1.11</td><td></td></tr>
+            <tr><td>Foslevodopa／foscarbidopa 皮下輸注</td><td class="n">× 0.75</td><td>Jost 2023</td></tr>
+            <tr><td>抗膽鹼藥（trihexyphenidyl 等）</td><td class="n">每劑 = 100</td><td>Jost 2023：僅限該劑量使 UPDRS-III 改善 ≥5 分的患者，故本工具不計入</td></tr>
           </tbody>
         </table></div>
         <p class="small muted" style="margin-top:8px">LEDD 為研究比較用途的近似值，換藥時仍需依臨床反應調整。</p>
@@ -424,7 +436,7 @@ ol.refs a{color:var(--accent)}
             <li>每日 OFF 時間 <b>≥ 2 小時</b></li>
             <li>每日困擾性異動症 <b>≥ 1 小時</b></li>
           </ul>
-          <p class="small muted" style="margin-top:8px">任一項成立即應評估元件輔助治療：視丘下核或蒼白球深部腦刺激術 (STN/GPi-DBS)、levodopa-carbidopa 腸道凝膠 (LCIG)、皮下 apomorphine 或 foslevodopa/foscarbidopa 輸注。可取得性與健保給付條件請依院內與最新規定確認。</p>
+          <p class="small muted" style="margin-top:8px">任一項成立即應評估裝置輔助治療（device-aided therapy）：視丘下核或蒼白球深部腦刺激術 (STN/GPi-DBS)、levodopa-carbidopa 腸道凝膠 (LCIG)、皮下 apomorphine 或 foslevodopa/foscarbidopa 輸注。可取得性與健保給付條件請依院內與最新規定確認。</p>
         </div>
         <div class="card">
           <h3>Hoehn &amp; Yahr 分期</h3>
@@ -438,6 +450,43 @@ ol.refs a{color:var(--accent)}
         </div>
       </div>
       <div class="card" style="grid-column:1/-1">
+        <h3>2018 年後的新藥與新證據</h3>
+        <div class="tablebox"><table>
+          <thead><tr><th>藥物</th><th>狀態</th><th>主要結果</th></tr></thead>
+          <tbody>
+            <tr><td>Tavapadon（Juvmo）<br><span class="small muted">D1/D5 部分致效劑，每日一次</span></td><td>美國 FDA 2026-09</td><td>TEMPO-2（早期）：MDS-UPDRS II+III 差 −9.1 分；噁心 30%，不良事件停藥 24% vs 4%。TEMPO-3（併用 levodopa）：good-ON +1.10 小時，OFF −0.94 小時。</td></tr>
+            <tr><td>IPX203（Crexont）<br><span class="small muted">長效 carbidopa-levodopa</span></td><td>美國 FDA 2024-08</td><td>RISE-PD：good-ON 比速效劑型多 0.53 小時，每日約 3 次 vs 5 次。</td></tr>
+            <tr><td>Foslevodopa／foscarbidopa<br><span class="small muted">24 小時皮下輸注</span></td><td>美國 FDA 2024-10</td><td>good-ON +1.75 小時，OFF −1.79 小時；注射部位反應常見（紅斑 27%、蜂窩性組織炎 19%）。</td></tr>
+            <tr><td>Apomorphine 連續皮下輸注（Onapgo）</td><td>美國 FDA 2025-02</td><td>TOLEDO 雙盲試驗證實減少 OFF；常見注射部位結節、嗜睡、噁心。</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small muted" style="margin-top:8px">以上藥物在台灣的許可與健保給付未查到確定資料，開立前請核對 TFDA 與健保署。</p>
+        <h3 style="margin-top:16px">延緩病程：尚未確立</h3>
+        <ul class="plain">
+          <li><b>Exenatide</b>（第 3 期，2025）：96 週 MDS-UPDRS III 與安慰劑無差異（p=0.47）。</li>
+          <li><b>Lixisenatide</b>（第 2 期，2024）：12 個月動作分數差 3.08 分，噁心 46%；需要更大型試驗。</li>
+          <li><b>Prasinezumab</b>（PADOVA 第 2b 期，2026）：未達主要終點（HR 0.84，p=0.066），第 3 期進行中。</li>
+        </ul>
+        <h3 style="margin-top:16px">MDS 2025 運動波動證據等級</h3>
+        <p class="small">2025 年改用 GRADE，等級名稱與 2018 年不同，只涵蓋運動波動；異動症仍引用 2018 年回顧。</p>
+        <ul class="plain">
+          <li><b>有效</b>：IPX066 長效 levodopa、pramipexole（IR、ER）、ropinirole IR、rotigotine、opicapone、safinamide、雙側 STN-DBS。</li>
+          <li><b>很可能有效</b>：腸道與皮下 levodopa、連續皮下 apomorphine、ropinirole PR、entacapone、rasagiline、istradefylline、amantadine 長效劑型、zonisamide、雙側 GPi-DBS、單側蒼白球切開術。</li>
+          <li><b>證據不足</b>：levodopa CR、間歇 apomorphine、selegiline、amantadine 速效劑型、根除幽門螺旋桿菌、exenatide。</li>
+        </ul>
+      </div>
+      <div class="card" style="grid-column:1/-1">
+        <h3>台灣仿單核對（2026-11-05）</h3>
+        <div class="tablebox"><table>
+          <thead><tr><th>藥物</th><th>內容</th><th>來源與限制</th></tr></thead>
+          <tbody>
+            <tr><td>Entacapone（Comtan，衛署藥輸字第 023248 號）</td><td>每次 200 mg，每日最多 10 次，共 2000 mg。美國仿單為 1600 mg/日。</td><td>台灣仿單全文</td></tr>
+            <tr><td>Opicapone（Ongentys，衛部藥輸字第 027952 號）</td><td>50 mg 每日一次，建議睡前；與 levodopa 前後至少間隔 1 小時；前後 1 小時不可進食。</td><td>醫院藥品資料的仿單摘要，非仿單原文</td></tr>
+            <tr><td>Rotigotine（Neupro，衛署藥輸字第 024936 號等）</td><td>早期與晚期最高皆為 8 mg/24h；16 mg 為臨床試驗的上限。健保：每日限一片，不得併用口服致效劑。</td><td>三家醫院藥品資料一致；仿單原文未能讀取</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="card" style="grid-column:1/-1">
         <h3>參考文獻</h3>
         <ol class="refs">
           <li>Postuma RB, et al. MDS clinical diagnostic criteria for Parkinson's disease. <i>Mov Disord</i> 2015;30:1591–1601. <a href="https://doi.org/10.1002/mds.26424" target="_blank" rel="noopener">doi:10.1002/mds.26424</a></li>
@@ -445,17 +494,165 @@ ol.refs a{color:var(--accent)}
           <li>Seppi K, et al. Update on treatments for nonmotor symptoms of Parkinson's disease — an evidence-based medicine review. <i>Mov Disord</i> 2019;34:180–198. <a href="https://doi.org/10.1002/mds.27602" target="_blank" rel="noopener">doi:10.1002/mds.27602</a></li>
           <li>Tomlinson CL, et al. Systematic review of levodopa dose equivalency reporting in Parkinson's disease. <i>Mov Disord</i> 2010;25:2649–2653. <a href="https://doi.org/10.1002/mds.23429" target="_blank" rel="noopener">doi:10.1002/mds.23429</a></li>
           <li>Jost ST, et al. Levodopa dose equivalency in Parkinson's disease: updated systematic review and proposals. <i>Mov Disord</i> 2023;38:1236–1252. <a href="https://doi.org/10.1002/mds.29410" target="_blank" rel="noopener">doi:10.1002/mds.29410</a></li>
-          <li>Antonini A, et al. Developing consensus among movement disorder specialists on clinical indicators for identification and management of advanced Parkinson's disease: a multi-country Delphi-panel approach. <i>Curr Med Res Opin</i> 2018;34:2063–2073.</li>
-          <li>Verschuur CVM, et al. Randomized delayed-start trial of levodopa in Parkinson's disease (LEAP). <i>N Engl J Med</i> 2019;380:315–324.</li>
+          <li>Antonini A, et al. Developing consensus among movement disorder specialists on clinical indicators for identification and management of advanced Parkinson's disease: a multi-country Delphi-panel approach. <i>Curr Med Res Opin</i> 2018;34:2063–2073. <a href="https://doi.org/10.1080/03007995.2018.1502165" target="_blank" rel="noopener">doi:10.1080/03007995.2018.1502165</a></li>
+          <li>Verschuur CVM, et al. Randomized delayed-start trial of levodopa in Parkinson's disease (LEAP). <i>N Engl J Med</i> 2019;380:315–324. <a href="https://doi.org/10.1056/NEJMoa1809983" target="_blank" rel="noopener">doi:10.1056/NEJMoa1809983</a></li>
+          <li>Olanow CW, et al. Factors predictive of the development of levodopa-induced dyskinesia and wearing-off in Parkinson's disease (STRIDE-PD). <i>Mov Disord</i> 2013;28:1064–1071. <a href="https://doi.org/10.1002/mds.25364" target="_blank" rel="noopener">doi:10.1002/mds.25364</a></li>
+          <li>de Bie RMA, et al. Update on treatments for Parkinson's disease motor fluctuations: an International Parkinson and Movement Disorder Society evidence-based medicine review. <i>Mov Disord</i> 2025;40:776–794. <a href="https://doi.org/10.1002/mds.30162" target="_blank" rel="noopener">doi:10.1002/mds.30162</a></li>
+          <li>Pringsheim T, et al. Dopaminergic therapy for motor symptoms in early Parkinson disease practice guideline summary (AAN). <i>Neurology</i> 2021;97:942–957. <a href="https://doi.org/10.1212/WNL.0000000000012868" target="_blank" rel="noopener">doi:10.1212/WNL.0000000000012868</a></li>
+          <li>Fernandez HH, et al. Flexible-dose tavapadon for Parkinson's disease (TEMPO-2). <i>Lancet Neurol</i> 2026;25:721–730. <a href="https://doi.org/10.1016/S1474-4422(26)00215-2" target="_blank" rel="noopener">doi:10.1016/S1474-4422(26)00215-2</a></li>
+          <li>Fernandez HH, et al. Tavapadon as adjunctive treatment for Parkinson disease (TEMPO-3). <i>JAMA Neurol</i> 2026;83:442–451. <a href="https://doi.org/10.1001/jamaneurol.2026.0577" target="_blank" rel="noopener">doi:10.1001/jamaneurol.2026.0577</a></li>
+          <li>Hauser RA, et al. IPX203 vs immediate-release carbidopa-levodopa (RISE-PD). <i>JAMA Neurol</i> 2023;80:1062–1069. <a href="https://doi.org/10.1001/jamaneurol.2023.2679" target="_blank" rel="noopener">doi:10.1001/jamaneurol.2023.2679</a></li>
+          <li>Soileau MJ, et al. Continuous subcutaneous foslevodopa-foscarbidopa in advanced Parkinson's disease. <i>Lancet Neurol</i> 2022;21:1099–1109. <a href="https://doi.org/10.1016/S1474-4422(22)00400-8" target="_blank" rel="noopener">doi:10.1016/S1474-4422(22)00400-8</a></li>
+          <li>Katzenschlager R, et al. Apomorphine subcutaneous infusion (TOLEDO). <i>Lancet Neurol</i> 2018;17:749–759. <a href="https://doi.org/10.1016/S1474-4422(18)30239-4" target="_blank" rel="noopener">doi:10.1016/S1474-4422(18)30239-4</a></li>
+          <li>Vijiaratnam N, et al. Exenatide once a week versus placebo as a potential disease-modifying treatment. <i>Lancet</i> 2025;405:627–636. <a href="https://doi.org/10.1016/S0140-6736(24)02808-3" target="_blank" rel="noopener">doi:10.1016/S0140-6736(24)02808-3</a></li>
+          <li>Meissner WG, et al. Trial of lixisenatide in early Parkinson's disease. <i>N Engl J Med</i> 2024;390:1176–1185. <a href="https://doi.org/10.1056/NEJMoa2312323" target="_blank" rel="noopener">doi:10.1056/NEJMoa2312323</a></li>
+          <li>Nikolcheva T, et al. Intravenous prasinezumab in early-stage Parkinson's disease (PADOVA). <i>Lancet</i> 2026;407:2227–2240. <a href="https://doi.org/10.1016/S0140-6736(26)00865-2" target="_blank" rel="noopener">doi:10.1016/S0140-6736(26)00865-2</a></li>
           <li>台灣動作障礙學會：巴金森病診斷與治療相關共識及衛教資料（請以學會網站最新公告版本為準）。</li>
           <li>衛生福利部中央健康保險署：全民健康保險藥物給付項目及支付標準（神經系統用藥給付規定）。</li>
         </ol>
       </div>
     </div>
-    <p class="disclaimer">本工具為臨床決策輔助與教學用途，建議內容依據上述指引歸納，不能取代醫師對個別患者的完整評估。藥物劑量、禁忌與交互作用請以仿單及院內處方集為準。</p>
+    <p class="disclaimer">本工具為臨床決策輔助與教學用途，建議內容依據上述指引歸納，不能取代醫師對個別患者的完整評估。藥物劑量、禁忌與交互作用請以仿單及院內處方集為準。版本 v2.1（2026-11-05）。</p>
   </section>
 </div>
 <div class="toast" id="toast" role="status"></div>
+
+<script>
+/*ENGINE-START*/
+const PDE=(()=>{
+  const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
+  const round25=x=>Math.max(25,Math.round(x/25)*25);
+  const DA={
+    prx:{n:'Pramipexole ER',f:100,max:4.5,step:.375,start:1.5},
+    rop:{n:'Ropinirole PR',f:20,max:24,step:2,start:4},
+    rot:{n:'Rotigotine 貼片',f:30,max:8,step:2,start:4}
+  };
+  /* safinamide: Jost 2023 uses one LED (150 mg) for both 50 and 100 mg/day */
+  const MAOB={
+    ras:{n:'Rasagiline 1 mg',led:100,ke:.92,b:.05},
+    sel:{n:'Selegiline 10 mg',led:100,ke:.94,b:.04},
+    saf50:{n:'Safinamide 50 mg',led:150,ke:.92,b:.05},
+    saf100:{n:'Safinamide 100 mg',led:150,ke:.9,b:.07}
+  };
+  const LIMITS={ld:[0,500],n:[0,10],first:[4,11],int:[1.5,8],dadose:[0,24],am:[0,400]};
+  const T0=4; /* chart and day start at 04:00, the earliest allowed first dose */
+  function normalize(r){
+    for(const k in LIMITS){const v=+r[k];r[k]=clamp(isFinite(v)?v:LIMITS[k][0],LIMITS[k][0],LIMITS[k][1]);}
+    r.n=Math.round(r.n);
+    if(r.da==='none')r.dadose=0;
+    return r;
+  }
+  /* mg do not carry across agonists: convert through LEDD, snap to the new drug's step */
+  function switchDA(from,dose,to){
+    if(to==='none')return 0;
+    const t=DA[to];
+    if(from==='none'||!DA[from]||!dose)return t.start;
+    const eq=dose*DA[from].f/t.f;
+    return clamp(+(Math.round(eq/t.step)*t.step).toFixed(3),t.step,t.max);
+  }
+  function ledd(r){
+    const ldIR=r.ld*r.n,ldCR=r.cr*0.75;
+    let v=ldIR+ldCR;
+    if(r.comt==='ent')v+=ldIR*0.33;
+    if(r.comt==='opi')v+=(ldIR+ldCR)*0.5;
+    if(MAOB[r.maob])v+=MAOB[r.maob].led;
+    if(DA[r.da])v+=r.dadose*DA[r.da].f;
+    return Math.round(v+r.am);
+  }
+  const KE=Math.LN2/1.5,KA_IR=3,KA_CR=0.8;
+  const bateman=(t,ka,ke)=>t<=0?0:(ka/(ka-ke))*(Math.exp(-ke*t)-Math.exp(-ka*t));
+  const NORM=(()=>{let m=0;for(let t=0;t<6;t+=0.01)m=Math.max(m,bateman(t,KA_IR,KE));return 1/m;})();
+  const therapeuticWindow=y=>({off:Math.min(0.85,Math.max(0.2,0.2+0.065*y)),dysk:Math.min(2.4,Math.max(0.95,2.65-0.13*y))});
+  function doseTimes(r){const a=[];if(r.ld>0)for(let i=0;i<r.n;i++)a.push(r.first+i*r.int);return a;}
+  const inDay=t=>((t-T0)%24+24)%24+T0;
+  /* both regimens are scored over the same waking hours, so an earlier first dose can actually shorten OFF */
+  function simulate(r,years,wake=7,sleep=23){
+    const w=therapeuticWindow(years);
+    const dyskT=w.dysk*(1+Math.min(r.am,400)/100*0.1);
+    const mao=MAOB[r.maob]||{ke:1,b:0};
+    const base=(DA[r.da]?r.dadose*DA[r.da].f/100*0.25:0)+mao.b+r.am/100*0.03;
+    const doses=[];
+    for(const k of [-48,-24,0]){
+      doseTimes(r).forEach(t=>doses.push({t:inDay(t)+k,mg:r.ld,ka:KA_IR,F:1,ke:KE*mao.ke*(r.comt==='ent'?0.7:r.comt==='opi'?0.62:1)}));
+      if(r.cr>0)doses.push({t:inDay(sleep)+k,mg:r.cr,ka:KA_CR,F:0.75,ke:KE*mao.ke*(r.comt==='opi'?0.62:1)});
+    }
+    const pts=[],dt=0.05;let off=0,dy=0;
+    for(let i=0;i<=480;i++){
+      const t=T0+i*dt;let c=base;
+      for(const d of doses)c+=d.mg/100*d.F*NORM*bateman(t-d.t,d.ka,d.ke);
+      pts.push([t,c]);
+      if(i<480&&t>=wake&&t<sleep){if(c<w.off)off+=dt;else if(c>dyskT)dy+=dt;}
+    }
+    return{pts,off,dy,thrOff:w.off,thrDysk:dyskT,base};
+  }
+  function fmtT(h){const m=((Math.round(h*60)%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
+  function fractionate(r,f){
+    if(r.n<=0)return r;
+    if(r.n<8){const span=r.n>1?r.int*(r.n-1):12,n=r.n+1;r.int=clamp(Math.round(span/(n-1)*2)/2,2.5,8);r.n=n;}
+    if(f&&r.ld>0)r.ld=round25(r.ld*f);
+    return r;
+  }
+  const amMax=e=>e==='s'?0:e==='m'?100:300;
+  /* limits that can be broken by either regimen */
+  function regWarnings(r,pt){
+    const W=[];
+    if(r.comt==='ent'&&r.n>8)W.push({lv:'warn',t:'Entacapone 超過 1600 mg/日',d:`目前 ${r.n*200} mg/日。台灣仿單上限 2000 mg/日（10 次）；美國仿單為 1600 mg/日，超過後經驗有限。`});
+    if(r.am>amMax(pt.egfr)&&pt.egfr!=='n')W.push({lv:'stop',t:'Amantadine 與腎功能',d:pt.egfr==='m'?`eGFR 30–59 建議 ≤100 mg/日，處方為 ${r.am} mg/日。`:`eGFR < 30 建議停用，或依仿單大幅減量（CrCl 15–29：100 mg 隔日；<15：200 mg 每 7 日）。處方為 ${r.am} mg/日。`});
+    if(r.am>300&&pt.egfr==='n')W.push({lv:'warn',t:'Amantadine 超過 300 mg/日',d:`處方為 ${r.am} mg/日，幻覺與水腫風險隨劑量上升。`});
+    if(DA[r.da]&&r.dadose>DA[r.da].max)W.push({lv:'stop',t:`${DA[r.da].n} 超過常用上限`,d:`上限 ${DA[r.da].max} mg/日，處方為 ${r.dadose} mg/日。`});
+    const dt=doseTimes(r);
+    if(dt.length&&dt[dt.length-1]>pt.sleep)W.push({lv:'warn',t:'最後一劑落在就寢之後',d:`${r.n} 次、間隔 ${r.int} 小時，最後一劑在 ${fmtT(dt[dt.length-1])}，就寢時間 ${fmtT(pt.sleep)}。請縮短間隔或減少次數。`});
+    return W;
+  }
+  /* MDS 2015: returns none | excluded | established | probable | fail */
+  function dxClass(c){
+    if(!(c.brady&&(c.tremor||c.rigid)))return'none';
+    if(c.ex>0)return'excluded';
+    if(c.rf===0&&c.sp>=2)return'established';
+    if(c.rf<=2&&c.sp>=c.rf)return'probable';
+    return'fail';
+  }
+  /* age may be null (blank input): age-based adjustments are then skipped */
+  function initRank(q){
+    const{age,func,tr,cog,icd,eds,oh}=q,has=age!==null&&age!==undefined,o=[];
+    let s=3,w=['對動作症狀效果最強，MDS 2018 臨床有用；AAN 2021：動作改善優於致效劑，但較易異動'];
+    if(has&&age>=70){s+=2;w.push('≥70 歲：副作用風險低於致效劑');}
+    if(func){s+=2;w.push('症狀已影響功能，需要足夠療效');}
+    if(cog){s+=2;w.push('認知障礙者較少精神副作用');}
+    if(icd||eds||oh){s+=1;w.push('衝動控制、嗜睡或低血壓風險低於致效劑');}
+    o.push({n:'Levodopa／carbidopa（或 benserazide）',s,w,dose:'起始 50–100 mg 每日 3 次；餐前 30–60 分鐘或餐後 1–2 小時服用，依反應緩慢調升'});
+    s=2;w=['MDS 2018 臨床有用；療效較 levodopa 弱，異動較少；AAN 2021：衝動控制障礙風險高於 levodopa'];
+    if(has&&age<60){s+=2;w.push('年輕患者異動症風險較高，可延後 levodopa 需求');}
+    if(has&&age>=70){s-=3;w.push('≥70 歲：幻覺、嗜睡、水腫風險高');}
+    if(cog){s-=3;w.push('認知障礙：易誘發幻覺與混亂');}
+    if(icd){s-=3;w.push('衝動控制障礙高風險');}
+    if(eds){s-=2;w.push('日間嗜睡與突發睡眠，影響駕駛');}
+    if(oh){s-=2;w.push('可能加重低血壓或幻覺');}
+    o.push({n:'非麥角類多巴胺致效劑（pramipexole、ropinirole、rotigotine）',s,w,dose:'選長效劑型；開立前告知衝動控制障礙風險'});
+    s=1;w=['MDS 2018 臨床有用（rasagiline、selegiline）；療效溫和'];
+    if(!func){s+=3;w.push('症狀輕微時可做為首個藥物');}else w.push('症狀已影響功能時單用常不足');
+    if(has&&age>=75){s-=1;w.push('高齡注意交互作用');}
+    o.push({n:'MAO-B 抑制劑（rasagiline 1 mg/日）',s,w,dose:'注意與 SSRI／SNRI、meperidine、tramadol 等交互作用'});
+    s=-1;w=[];
+    if(tr&&has&&age<60&&!cog){s=2;w.push('年輕、以顫抖為主且認知正常時可考慮');}
+    else{
+      if(has&&age>=60)w.push('≥60 歲易致混亂、便秘、尿滯留，應避免');
+      if(cog)w.push('認知障礙者應避免');
+      if(!tr)w.push('非以顫抖為主，沒有使用理由');
+      if(!has&&tr&&!cog)w.push('未填年齡，無法判斷是否適合');
+    }
+    o.push({n:'抗膽鹼藥（trihexyphenidyl）',s,w,dose:'僅限特定族群、低劑量'});
+    s=1;w=['早期輕症可短期使用；證據有限'];
+    if((has&&age>=70)||cog){s-=1;w.push('高齡或認知障礙易出現幻覺');}
+    o.push({n:'Amantadine',s,w,dose:'eGFR 下降需減量'});
+    o.sort((a,b)=>b.s-a.s);
+    return o.map(x=>({...x,label:x.s>=5?'首選':x.s>=2?'可選':'不建議'}));
+  }
+  return{clamp,round25,DA,MAOB,T0,normalize,switchDA,ledd,therapeuticWindow,doseTimes,inDay,simulate,fmtT,fractionate,amMax,regWarnings,dxClass,initRank};
+})();
+if(typeof module!=='undefined')module.exports=PDE;
+/*ENGINE-END*/
+</script>
 
 <script>
 (function(){
@@ -470,15 +667,30 @@ function copyText(txt){
 
 /* ---------------- Tabs ---------------- */
 const TABS=['dx','init','sim','ref'];
-function showTab(id){
-  TABS.forEach(t=>{$('#'+t).hidden=t!==id;$('#tab-'+t).setAttribute('aria-selected',t===id?'true':'false');});
-  try{localStorage.setItem('pd-tab',id);}catch(e){}
+const TAB_KEY='parkinson-tab'; /* pages on this github.io origin share localStorage */
+function showTab(id,focus){
+  TABS.forEach(t=>{
+    const on=t===id,b=$('#tab-'+t);
+    $('#'+t).hidden=!on;b.setAttribute('aria-selected',on?'true':'false');b.tabIndex=on?0:-1;
+    if(on){if(focus)b.focus();if(b.scrollIntoView)b.scrollIntoView({block:'nearest',inline:'nearest'});}
+  });
+  try{localStorage.setItem(TAB_KEY,id);}catch(e){}
+  try{history.replaceState(null,'','#'+id);}catch(e){}
   if(id==='sim')renderSim();
 }
-document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.t)));
-let startTab='sim';
+document.querySelectorAll('.tab').forEach(b=>{
+  b.addEventListener('click',()=>showTab(b.dataset.t));
+  b.addEventListener('keydown',e=>{
+    const i=TABS.indexOf(b.dataset.t);
+    const to={ArrowRight:(i+1)%TABS.length,ArrowLeft:(i+TABS.length-1)%TABS.length,Home:0,End:TABS.length-1}[e.key];
+    if(to===undefined)return;
+    e.preventDefault();showTab(TABS[to],true);
+  });
+});
+window.addEventListener('hashchange',()=>{const t=location.hash.slice(1);if(TABS.includes(t))showTab(t);});
+let startTab='dx';
 const h=(location.hash||'').slice(1);
-if(TABS.includes(h))startTab=h;else{try{const s=localStorage.getItem('pd-tab');if(TABS.includes(s))startTab=s;}catch(e){}}
+if(TABS.includes(h))startTab=h;else{try{const s=localStorage.getItem(TAB_KEY);if(TABS.includes(s))startTab=s;}catch(e){}}
 
 /* ================= 1. Diagnosis ================= */
 const CORE=[
@@ -489,7 +701,7 @@ const CORE=[
 const EXCL=[
  '明確的小腦異常（小腦性步態、肢體運動失調、小腦性眼動異常）',
  '向下垂直核上性凝視麻痺，或向下垂直掃視選擇性變慢',
- '發病 5 年內診斷為可能的行為變異型額顳葉失智或原發性漸進性失語',
+ '發病 5 年內診斷為很可能的行為變異型額顳葉失智或原發性漸進性失語',
  '巴金森症狀侷限於下肢超過 3 年',
  '使用多巴胺受體阻斷劑或耗竭劑，劑量與時程符合藥物引起之巴金森症',
  '病情至少中等嚴重，高劑量 levodopa 仍無可觀察到的反應',
@@ -502,7 +714,7 @@ const RF=[
  '5 年以上動作症狀完全無進展（非治療所致穩定）',
  '發病 5 年內出現早期延髓功能障礙：嚴重構音障礙、發聲困難或吞嚥困難',
  '吸氣性呼吸障礙：日間或夜間吸氣喘鳴、頻繁吸氣性嘆息',
- '發病 5 年內嚴重自主神經衰竭：姿勢性低血壓（3 分鐘內 ≥30/15 mmHg）或嚴重尿滯留／尿失禁',
+ '發病 5 年內嚴重自主神經衰竭：姿勢性低血壓（站立 3 分鐘內收縮壓降 ≥30 或舒張壓降 ≥15 mmHg，且非脫水、藥物或其他疾病所致），或嚴重尿滯留／尿失禁（男性須非攝護腺疾病所致且合併勃起障礙）',
  '發病 3 年內因平衡障礙反覆跌倒（>1 次/年）',
  '發病 10 年內不成比例的頸前屈（肌張力不全性）或手足攣縮',
  '病程 5 年仍完全無常見非動作症狀（睡眠、自主神經、嗅覺、精神）',
@@ -530,17 +742,18 @@ function buildDx(){
 function renderDx(){
   const park=DX.core.brady&&(DX.core.tremor||DX.core.rigid);
   const ex=DX.ex.size,rf=DX.rf.size,sp=DX.sp.size;
+  const klass=PDE.dxClass({...DX.core,ex,rf,sp});
   $('#t-ex').textContent=ex;$('#t-rf').textContent=rf;$('#t-sp').textContent=sp;
   $('#dx1-count').textContent=park?'符合':'未符合';
   $('#dx-ex-count').textContent=`${ex} / ${EXCL.length}`;$('#dx-rf-count').textContent=`${rf} / ${RF.length}`;$('#dx-sp-count').textContent=`${sp} / ${SUP.length}`;
   let v,rule,cls,next=[];
-  if(!park){v='尚未符合巴金森症候群';cls='warn';rule='需有動作遲緩，並合併靜止型顫抖或僵硬。';
+  if(klass==='none'){v='尚未符合巴金森症候群';cls='warn';rule='需有動作遲緩，並合併靜止型顫抖或僵硬。';
     next=['重新檢查動作遲緩（手指敲擊、握拳、腳跟點地）','考慮本態性顫抖、功能性動作障礙、憂鬱或關節疾病等鑑別診斷'];}
-  else if(ex>0){v='不診斷為巴金森病';cls='stop';rule='存在絕對排除條件。';
+  else if(klass==='excluded'){v='不診斷為巴金森病';cls='stop';rule='存在絕對排除條件。';
     next=['依排除項目考慮：多系統萎縮 (MSA)、漸進性上眼神經核麻痺 (PSP)、皮質基底核退化症 (CBD)、路易氏體失智症 (DLB)','藥物引起之巴金森症：檢視 metoclopramide、抗精神病藥、flunarizine 等','血管性或常壓性水腦症：安排腦部 MRI'];}
-  else if(rf===0&&sp>=2){v='臨床確立的巴金森病';cls='go';rule='無絕對排除、至少 2 項支持條件、無紅旗徵象。';
+  else if(klass==='established'){v='臨床確立的巴金森病';cls='go';rule='無絕對排除、至少 2 項支持條件、無紅旗徵象。';
     next=['進入「起始治療」評估','記錄 MDS-UPDRS 與 Hoehn & Yahr 做為基準'];}
-  else if(rf<=2&&sp>=rf){v='臨床很可能的巴金森病';cls='go';rule=rf===0?'無絕對排除與紅旗，支持條件不足 2 項。':`紅旗 ${rf} 項已由 ${sp} 項支持條件抵銷（紅旗 ≤ 2 項）。`;
+  else if(klass==='probable'){v='臨床很可能的巴金森病';cls='go';rule=rf===0?'無絕對排除與紅旗，支持條件不足 2 項。':`紅旗 ${rf} 項已由 ${sp} 項支持條件抵銷（紅旗 ≤ 2 項）。`;
     next=['可開始治療並追蹤治療反應','若診斷存疑可安排 99mTc-TRODAT-1 SPECT 或 MIBG 心肌掃描'];
     if(rf>0)next.push('持續追蹤紅旗項目，警覺非典型巴金森症候群');}
   else{v='不符合巴金森病診斷';cls='stop';rule=rf>2?'紅旗徵象超過 2 項。':`紅旗 ${rf} 項，支持條件 ${sp} 項不足以抵銷。`;
@@ -554,41 +767,16 @@ $('#dx-reset').addEventListener('click',()=>{DX.core={brady:false,tremor:false,r
 /* ================= 2. Initial treatment ================= */
 const I={impact:'func'};
 function renderInit(){
-  const age=+$('#i-age').value||0,tr=$('#i-tremor').checked,cog=$('#i-cog').checked,icd=$('#i-icd').checked,eds=$('#i-eds').checked,oh=$('#i-oh').checked,func=I.impact==='func';
-  const o=[];
-  let s=3,w=['對動作症狀效果最強，MDS 2018 臨床有用'];
-  if(age>=70){s+=2;w.push('≥70 歲：副作用風險低於致效劑');}
-  if(func){s+=2;w.push('症狀已影響功能，需要足夠療效');}
-  if(cog){s+=2;w.push('認知障礙者較少精神副作用');}
-  if(icd||eds||oh){s+=1;w.push('衝動控制、嗜睡或低血壓風險低於致效劑');}
-  o.push({n:'Levodopa／carbidopa（或 benserazide）',s,w,dose:'起始 50–100 mg 每日 3 次，隨餐前 30 分鐘；依反應緩慢調升'});
-  s=2;w=['MDS 2018 臨床有用；延後運動併發症，但療效較 levodopa 弱'];
-  if(age<60){s+=2;w.push('年輕患者異動症風險較高，可延後 levodopa 需求');}
-  if(age>=70){s-=3;w.push('≥70 歲：幻覺、嗜睡、水腫風險高');}
-  if(cog){s-=3;w.push('認知障礙：易誘發幻覺與混亂');}
-  if(icd){s-=3;w.push('衝動控制障礙高風險');}
-  if(eds){s-=2;w.push('日間嗜睡與突發睡眠，影響駕駛');}
-  if(oh){s-=2;w.push('可能加重低血壓或幻覺');}
-  o.push({n:'非麥角類多巴胺致效劑（pramipexole、ropinirole、rotigotine）',s,w,dose:'選長效劑型；開立前告知衝動控制障礙風險'});
-  s=1;w=['MDS 2018 臨床有用（rasagiline、selegiline）；療效溫和'];
-  if(!func){s+=3;w.push('症狀輕微時可做為首個藥物');}else{w.push('症狀已影響功能時單用常不足');}
-  if(age>=75){s-=1;w.push('高齡注意交互作用');}
-  o.push({n:'MAO-B 抑制劑（rasagiline 1 mg/日）',s,w,dose:'注意與 SSRI／SNRI、meperidine、tramadol 等交互作用'});
-  s=-1;w=[];
-  if(tr&&age<60&&!cog){s=2;w.push('年輕、以顫抖為主且認知正常時可考慮');}
-  else{w.push('≥60 歲或認知障礙者易致混亂、便秘、尿滯留，應避免');if(!tr)w.push('非以顫抖為主');}
-  o.push({n:'抗膽鹼藥（trihexyphenidyl）',s,w,dose:'僅限特定族群、低劑量'});
-  s=1;w=['早期輕症可短期使用；證據有限'];
-  if(age>=70||cog){s-=1;w.push('高齡或認知障礙易出現幻覺');}
-  o.push({n:'Amantadine',s,w,dose:'eGFR 下降需減量'});
-  o.sort((a,b)=>b.s-a.s);
-  $('#init-out').innerHTML=o.map(x=>{
-    const lab=x.s>=5?['首選','go']:x.s>=2?['可選','warn']:['不建議','stop'];
+  const raw=$('#i-age').value,age=raw===''?null:PDE.clamp(+raw,20,100);
+  const o=PDE.initRank({age,func:I.impact==='func',tr:$('#i-tremor').checked,cog:$('#i-cog').checked,icd:$('#i-icd').checked,eds:$('#i-eds').checked,oh:$('#i-oh').checked});
+  const cls={'首選':'go','可選':'warn','不建議':'stop'};
+  $('#init-out').innerHTML=(age===null?'<div class="alert warn"><strong>尚未填年齡</strong><span class="small">目前排序沒有納入年齡。</span></div>':'')+o.map(x=>{
     const pct=Math.max(4,Math.min(100,(x.s+3)/12*100));
-    return `<div class="opt"><h3>${esc(x.n)}</h3><span class="pill ${lab[1]}">${lab[0]}</span>
+    return `<div class="opt"><h3>${esc(x.n)}</h3><span class="pill ${cls[x.label]}">${x.label}</span>
       <div class="meter"><i style="width:${pct}%"></i></div>
       <div class="why">${x.w.map(esc).join('；')}。<br><span class="small">${esc(x.dose)}</span></div></div>`;}).join('');
 }
+$('#i-age').addEventListener('change',e=>{if(e.target.value!==''){e.target.value=PDE.clamp(+e.target.value,20,100);renderInit();}});
 ['#i-age','#i-tremor','#i-cog','#i-icd','#i-eds','#i-oh'].forEach(s=>$(s).addEventListener('input',renderInit));
 document.querySelectorAll('#i-impact button').forEach(b=>b.addEventListener('click',()=>{I.impact=b.dataset.v;document.querySelectorAll('#i-impact button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));renderInit();}));
 
@@ -609,51 +797,11 @@ const PROBS=[
 ];
 const baseReg={ld:100,n:4,first:7,int:4,cr:0,comt:'none',maob:'none',da:'rop',dadose:8,am:0,ach:0};
 const S={
-  pt:{age:68,years:9,cog:'none',egfr:'n',offh:2.5,dyskh:1.5,icdrisk:false},
+  pt:{age:68,years:9,cog:'none',egfr:'n',offh:2.5,dyskh:1.5,wake:7,sleep:23,icdrisk:false},
   probs:new Set(['wo','pdk']),
-  cur:{...baseReg},prop:{...baseReg},view:'cur',propTouched:false
+  cur:{...baseReg},prop:{...baseReg},view:'cur',propTouched:false,applied:new Set()
 };
-const DA_INFO={prx:{n:'Pramipexole ER',f:100},rop:{n:'Ropinirole PR',f:20},rot:{n:'Rotigotine 貼片',f:30}};
-const MAOB_INFO={ras:{n:'Rasagiline 1 mg',led:100,ke:.92,b:.05},sel:{n:'Selegiline 10 mg',led:100,ke:.94,b:.04},saf50:{n:'Safinamide 50 mg',led:75,ke:.92,b:.05},saf100:{n:'Safinamide 100 mg',led:150,ke:.9,b:.07}};
-
-function ledd(r){
-  const ldIR=r.ld*r.n, ldCR=r.cr*0.75;
-  let v=ldIR+ldCR;
-  if(r.comt==='ent')v+=ldIR*0.33;
-  if(r.comt==='opi')v+=(ldIR+ldCR)*0.5;
-  if(r.maob!=='none')v+=MAOB_INFO[r.maob].led;
-  if(r.da!=='none')v+=r.dadose*DA_INFO[r.da].f;
-  v+=r.am;
-  return Math.round(v);
-}
-/* schematic PK/PD model */
-const KE=Math.LN2/1.5,KA_IR=3,KA_CR=0.8;
-function bateman(t,ka,ke){return t<=0?0:(ka/(ka-ke))*(Math.exp(-ke*t)-Math.exp(-ka*t));}
-const NORM=(()=>{let m=0;for(let t=0;t<6;t+=0.01)m=Math.max(m,bateman(t,KA_IR,KE));return 1/m;})();
-function window_(years){return{off:Math.min(0.85,Math.max(0.2,0.2+0.065*years)),dysk:Math.min(2.4,Math.max(0.95,2.65-0.13*years))};}
-function doseTimes(r){const a=[];for(let i=0;i<r.n;i++)a.push(r.first+i*r.int);return a;}
-function simulate(r,years){
-  const w=window_(years);
-  const dyskT=w.dysk*(1+Math.min(r.am,400)/100*0.1);
-  const mao=r.maob!=='none'?MAOB_INFO[r.maob]:{ke:1,b:0};
-  const base=(r.da!=='none'?r.dadose*DA_INFO[r.da].f/100*0.25:0)+mao.b+r.am/100*0.03;
-  const doses=[];
-  for(const d of [-24,0]){
-    doseTimes(r).forEach(t=>doses.push({t:t+d,mg:r.ld,ka:KA_IR,F:1,ke:KE*mao.ke*(r.comt==='ent'?0.7:r.comt==='opi'?0.62:1)}));
-    if(r.cr>0)doses.push({t:22+d,mg:r.cr,ka:KA_CR,F:0.75,ke:KE*mao.ke*(r.comt==='opi'?0.62:1)});
-  }
-  const pts=[];const dt=0.05;
-  const wake0=r.first,wake1=r.first+16;
-  let off=0,dy=0;
-  for(let t=6;t<=30.0001;t+=dt){
-    let c=base;
-    for(const d of doses)c+=d.mg/100*d.F*NORM*bateman(t-d.t,d.ka,d.ke);
-    pts.push([t,c]);
-    if(t>=wake0&&t<wake1){if(c<w.off)off+=dt;else if(c>dyskT)dy+=dt;}
-  }
-  return{pts,off,dy,thrOff:w.off,thrDysk:dyskT,base};
-}
-function fmtT(h){h=((h%24)+24)%24;const H=Math.floor(h),M=Math.round((h-H)*60);return String(H).padStart(2,'0')+':'+String(M===60?0:M).padStart(2,'0');}
+const DA_INFO=PDE.DA,MAOB_INFO=PDE.MAOB,{ledd,simulate,doseTimes,fmtT}=PDE;
 function regText(r){
   const L=[];
   if(r.n>0&&r.ld>0)L.push(`Levodopa ${r.ld} mg × ${r.n} 次（${doseTimes(r).map(fmtT).join('、')}）`);
@@ -673,33 +821,62 @@ function buildProbChips(){
   $('#probs-motor').innerHTML=mk('m');$('#probs-nm').innerHTML=mk('n');
   document.querySelectorAll('[data-p]').forEach(i=>i.addEventListener('change',()=>{i.checked?S.probs.add(i.dataset.p):S.probs.delete(i.dataset.p);renderSim();}));
 }
-const PT_FIELDS={age:'#p-age',years:'#p-years',cog:'#p-cog',egfr:'#p-egfr',offh:'#p-offh',dyskh:'#p-dyskh'};
+const PT_FIELDS={age:'#p-age',years:'#p-years',cog:'#p-cog',egfr:'#p-egfr',offh:'#p-offh',dyskh:'#p-dyskh',wake:'#p-wake',sleep:'#p-sleep'};
 function fillPt(){for(const k in PT_FIELDS)$(PT_FIELDS[k]).value=S.pt[k];$('#p-icdrisk').checked=S.pt.icdrisk;}
-for(const k in PT_FIELDS)$(PT_FIELDS[k]).addEventListener('input',e=>{const v=e.target.value;S.pt[k]=(k==='cog'||k==='egfr')?v:(+v||0);renderSim();});
-$('#p-icdrisk').addEventListener('change',e=>{S.pt.icdrisk=e.target.checked;renderSim();});
+for(const k in PT_FIELDS){
+  const el=$(PT_FIELDS[k]);
+  el.addEventListener('input',e=>{
+    let v=e.target.value;
+    if(k!=='cog'&&k!=='egfr'){
+      if(v===''||!isFinite(+v))return; /* blank keeps the last value; restored on change */
+      v=PDE.clamp(+v,+el.min,+el.max);
+    }
+    S.pt[k]=v;renderSim(true);
+  });
+  el.addEventListener('change',fillPt);
+}
+$('#p-icdrisk').addEventListener('change',e=>{S.pt.icdrisk=e.target.checked;renderSim(true);});
 const R_FIELDS={ld:['#r-ld','n'],n:['#r-n','n'],first:['#r-first','n'],int:['#r-int','n'],cr:['#r-cr','n'],comt:['#r-comt','s'],maob:['#r-maob','s'],da:['#r-da','s'],dadose:['#r-dadose','n'],am:['#r-am','n'],ach:['#r-ach','n']};
-function fillReg(){const r=S[S.view];for(const k in R_FIELDS)$(R_FIELDS[k][0]).value=r[k];$('#r-dadose').disabled=r.da==='none';
-  $('#reg-hint').textContent=S.view==='cur'?'輸入患者目前的用藥。修改後，模擬圖中的虛線會更新。':'調整後處方（實線）。可直接編輯，或在下方建議中按「套用」。';}
-for(const k in R_FIELDS){$(R_FIELDS[k][0]).addEventListener('input',e=>{
-  const r=S[S.view];let v=e.target.value;if(R_FIELDS[k][1]==='n'){v=parseFloat(v);if(!isFinite(v))v=0;}
-  r[k]=v;if(k==='da'&&v==='none')r.dadose=0;if(k==='da'&&v!=='none'&&!r.dadose)r.dadose=v==='prx'?1.5:v==='rop'?4:4;
-  if(k==='n')r.n=Math.max(0,Math.min(10,Math.round(r.n)));if(k==='int')r.int=Math.max(1.5,r.int);
-  if(S.view==='prop')S.propTouched=true;
-  if(S.view==='cur'&&!S.propTouched)S.prop={...S.cur};
-  if(k==='da')fillReg();renderSim(true);
-});}
+function fillReg(){
+  const r=S[S.view];
+  for(const k in R_FIELDS)$(R_FIELDS[k][0]).value=r[k];
+  const dd=$('#r-dadose'),info=DA_INFO[r.da];
+  dd.disabled=!info;dd.step=info?info.step:'any';dd.max=info?info.max:24;
+  $('#reg-hint').textContent=S.view==='cur'?'輸入患者目前的用藥（虛線）。尚未自行調整時，「調整後」會跟著更新。':'調整後處方（實線）。可直接編輯，或在下方建議中按「套用」。';
+}
+for(const k in R_FIELDS){
+  const el=$(R_FIELDS[k][0]);
+  el.addEventListener('input',e=>{
+    const r=S[S.view];let v=e.target.value;
+    if(R_FIELDS[k][1]==='n'){
+      if(v==='')return; /* blank keeps the last value; restored on change */
+      v=parseFloat(v);if(!isFinite(v))return;
+    }
+    if(k==='da'){
+      const prev=r.da,dose=r.dadose;
+      r.dadose=PDE.switchDA(prev,dose,v);
+      if(prev!=='none'&&v!=='none')toast(`已依 LEDD 換算為 ${r.dadose} mg/日，請確認`);
+    }
+    r[k]=v;PDE.normalize(r);
+    if(S.view==='prop')S.propTouched=true;
+    if(S.view==='cur'&&!S.propTouched){S.prop={...S.cur};S.applied.clear();}
+    if(k==='da')fillReg();
+    renderSim(true);
+  });
+  el.addEventListener('change',fillReg);
+}
 function setView(v){S.view=v;document.querySelectorAll('#reg-view button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v?'true':'false'));fillReg();}
 document.querySelectorAll('#reg-view button').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
-$('#copy-cur').addEventListener('click',()=>{S.prop={...S.cur};S.propTouched=false;setView('prop');renderSim();toast('已將目前處方複製到調整後');});
+$('#copy-cur').addEventListener('click',()=>{S.prop={...S.cur};S.propTouched=false;S.applied.clear();setView('prop');renderSim();toast('已將目前處方複製到調整後');});
 
 /* ---- regimen transforms used by "套用" ---- */
-const round25=x=>Math.max(25,Math.round(x/25)*25);
-function fractionate(r,doseFactor){
-  const span=r.int*(Math.max(r.n,1)-1)||12;const n=Math.min(8,r.n+1);
-  r.int=Math.max(2.5,Math.round(span/(n-1)*2)/2);r.n=n;if(doseFactor)r.ld=round25(r.ld*doseFactor);
-}
+const {round25,fractionate}=PDE;
 let RECS=[];
-function applyRec(i){const fn=RECS[i];if(!fn)return;fn(S.prop);S.propTouched=true;setView('prop');renderSim();toast('已套用到調整後處方');}
+function applyRec(i){
+  const rec=RECS[i];if(!rec||S.applied.has(rec.key))return;
+  rec.fn(S.prop);PDE.normalize(S.prop);
+  S.applied.add(rec.key);S.propTouched=true;setView('prop');renderSim();toast('已套用到調整後處方');
+}
 
 /* ---- recommendation engine ---- */
 function buildRecs(){
@@ -708,53 +885,54 @@ function buildRecs(){
   const psychRisk=elderly||cogImp||has('hallu');
   const daBad=psychRisk||has('icd')||has('eds')||p.icdrisk||has('oh');
   RECS=[];
-  const A=(label,fn)=>{RECS.push(fn);return{label,idx:RECS.length-1};};
+  const A=(label,fn,key)=>{RECS.push({fn,key:key||label});return{label,idx:RECS.length-1,key:key||label};};
   const out=[];
-  const EV18='MDS 2018：臨床有用',EV19='MDS 2019';
-  const amMax=p.egfr==='s'?0:p.egfr==='m'?100:300;
+  const EV18='MDS 2018：臨床有用',EV19='MDS 2019',EV25=x=>`MDS 2025：${x}`;
+  const amMax=PDE.amMax(p.egfr);
 
   if(has('wo')){
     const st=[];
     st.push({lv:'go',t:'優化 levodopa 給藥：縮短間隔、增加次數',d:`目前間隔 <b>${c.int} 小時</b>。將間隔縮短（如 q4h → q3h），總量不變或小幅增加；服藥與高蛋白餐間隔 30–60 分鐘。${has('pdk')?'合併高峰異動時，單次劑量不要增加。':''}`,
-      a:c.n<8?A('套用：增加一次、縮短間隔',r=>fractionate(r,has('pdk')?0.85:1)):null});
-    if(c.comt==='none')st.push({lv:'go',t:'加上 COMT 抑制劑',ev:EV18,d:`Opicapone 50 mg 睡前一次（服藥負擔小），或 entacapone 200 mg 隨每劑 levodopa（每日最多 8 顆）。${has('pdk')||c.n*c.ld>=600?'<b>加藥時 levodopa 單次劑量減 10–30%</b>，避免異動症加重。':'可能增加異動症，必要時減少 levodopa。'}注意：腹瀉、尿液變橘紅色（entacapone）。`,
+      a:c.n<8?A('套用：增加一次、縮短間隔',r=>fractionate(r,has('pdk')?0.85:1),'frac'):null});
+    if(c.comt==='none')st.push({lv:'go',t:'加上 COMT 抑制劑',ev:EV25('opicapone 有效、entacapone 很可能有效'),d:`Opicapone 50 mg 睡前一次，與 levodopa 前後間隔至少 1 小時，服藥前後 1 小時不進食；或 entacapone 200 mg 隨每劑 levodopa（台灣仿單上限 10 次、2000 mg/日；美國仿單 1600 mg/日）。${has('pdk')||c.n*c.ld>=600?'<b>加藥時 levodopa 單次劑量減 10–30%</b>，避免異動症加重。':'可能增加異動症，必要時減少 levodopa。'}注意：腹瀉、尿液變橘紅色（entacapone）。`,
       a:A('套用：加 opicapone',r=>{r.comt='opi';if(has('pdk'))r.ld=round25(r.ld*0.8);})});
-    else if(c.comt==='ent')st.push({lv:'go',t:'Entacapone 改為 opicapone',ev:EV18,d:'每日一次，減少服藥顆數；opicapone 持續抑制作用可使 OFF 時間進一步縮短。',a:A('套用：改 opicapone',r=>{r.comt='opi';})});
-    if(c.maob==='none')st.push({lv:'go',t:'加上 MAO-B 抑制劑',ev:EV18,d:'Rasagiline 1 mg/日，或 safinamide 50 mg/日起、可調至 100 mg。注意與 SSRI／SNRI、tramadol、meperidine 的交互作用；不可兩種 MAO-B 併用。',
+    else if(c.comt==='ent')st.push({lv:'go',t:'Entacapone 改為 opicapone',ev:EV25('opicapone 有效'),d:'每日一次，減少服藥顆數。Opicapone 與 levodopa 前後間隔至少 1 小時，服藥前後 1 小時不進食。',a:A('套用：改 opicapone',r=>{r.comt='opi';})});
+    if(c.maob==='none')st.push({lv:'go',t:'加上 MAO-B 抑制劑',ev:EV25('safinamide 有效、rasagiline 很可能有效'),d:'Rasagiline 1 mg/日，或 safinamide 50 mg/日起、可調至 100 mg。注意與 SSRI／SNRI、tramadol、meperidine 的交互作用；不可兩種 MAO-B 併用。',
       a:A('套用：加 safinamide 50 mg',r=>{r.maob='saf50';})});
-    else if(c.maob==='saf50')st.push({lv:'go',t:'Safinamide 調升至 100 mg',ev:EV18,d:'耐受良好時可增加至 100 mg/日。',a:A('套用：safinamide 100 mg',r=>{r.maob='saf100';})});
-    else if(c.maob==='sel')st.push({lv:'go',t:'Selegiline 改為 rasagiline 或 safinamide',ev:EV18,d:'Selegiline 用於運動波動的證據較弱，且有安非他命類代謝物，可能影響睡眠。',a:A('套用：改 safinamide 50 mg',r=>{r.maob='saf50';})});
+    else if(c.maob==='saf50')st.push({lv:'go',t:'Safinamide 調升至 100 mg',ev:EV25('safinamide 有效'),d:'耐受良好時可增加至 100 mg/日。',a:A('套用：safinamide 100 mg',r=>{r.maob='saf100';})});
+    else if(c.maob==='sel')st.push({lv:'go',t:'Selegiline 改為 rasagiline 或 safinamide',ev:EV25('selegiline 證據不足'),d:'Selegiline 對運動波動的證據不足，且有安非他命類代謝物，可能影響睡眠。',a:A('套用：改 safinamide 50 mg',r=>{r.maob='saf50';})});
     if(c.da==='none'){
       st.push(daBad?{lv:'avoid',t:'多巴胺致效劑：此患者不建議新增',d:`原因：${[elderly&&'≥70 歲',cogImp&&'認知障礙',has('hallu')&&'已有幻覺',(has('icd')||p.icdrisk)&&'衝動控制風險',has('eds')&&'日間嗜睡',has('oh')&&'姿勢性低血壓'].filter(Boolean).join('、')}。`}
-        :{lv:'go',t:'加上長效多巴胺致效劑',ev:EV18,d:'Pramipexole ER、ropinirole PR 或 rotigotine 貼片，提供持續刺激。開立前告知衝動控制障礙、嗜睡與水腫風險並記錄。',a:A('套用：加 ropinirole PR 4 mg',r=>{r.da='rop';r.dadose=4;})});
+        :{lv:'go',t:'加上長效多巴胺致效劑',ev:EV25('pramipexole ER、rotigotine 有效，ropinirole PR 很可能有效'),d:'Pramipexole ER、ropinirole PR 或 rotigotine 貼片，提供持續刺激。開立前告知衝動控制障礙、嗜睡與水腫風險並記錄。',a:A('套用：加 ropinirole PR 4 mg',r=>{r.da='rop';r.dadose=4;})});
     }else if(!daBad){
-      const f=DA_INFO[c.da].f,max={prx:4.5,rop:24,rot:16}[c.da];
-      if(c.dadose<max)st.push({lv:'go',t:`${DA_INFO[c.da].n} 在耐受下調升`,ev:EV18,d:`目前 ${c.dadose} mg/日（LEDD ${Math.round(c.dadose*f)}）。逐步調升並追蹤嗜睡與衝動行為。`,
-        a:A('套用：調升一級',r=>{r.dadose=+(r.dadose+({prx:0.75,rop:2,rot:2}[r.da])).toFixed(3);})});
+      const f=DA_INFO[c.da].f,max=DA_INFO[c.da].max;
+      if(c.dadose<max)st.push({lv:'go',t:`${DA_INFO[c.da].n} 在耐受下調升`,ev:EV25(c.da==='rop'?'很可能有效':'有效'),d:`目前 ${c.dadose} mg/日（LEDD ${Math.round(c.dadose*f)}）。逐步調升並追蹤嗜睡與衝動行為。${c.da==='rot'?'台灣資料上限 8 mg/24h；健保每日限一片，且不得併用口服致效劑。':''}`,
+        a:A('套用：調升一級',r=>{if(DA_INFO[r.da])r.dadose=Math.min(DA_INFO[r.da].max,+(r.dadose+({prx:0.75,rop:2,rot:2}[r.da])).toFixed(3));})});
     }
-    st.push({lv:'consider',t:'口服已最佳化仍不足：評估進階治療',d:'符合 5-2-1 任一項即轉介動作障礙專科，評估 STN/GPi-DBS、LCIG、皮下 apomorphine 或 foslevodopa 輸注。',ev:EV18});
+    st.push({lv:'consider',t:'其他新口服選項（依台灣可取得性）',d:'IPX203 長效 levodopa：RISE-PD 每日約 3 次，good-ON 比 5 次速效 levodopa 多 0.53 小時。Tavapadon 併用 levodopa：TEMPO-3 OFF 比安慰劑少 0.94 小時，常見噁心、異動與頭暈。兩者未列入本模擬器。'});
+    st.push({lv:'consider',t:'口服已最佳化仍不足：評估進階治療',d:'符合 5-2-1 任一項即轉介動作障礙專科。STN-DBS 評為有效；GPi-DBS、腸道 levodopa、皮下 foslevodopa 與連續皮下 apomorphine 評為很可能有效。',ev:'MDS 2025'});
     out.push({id:'wo',st});
   }
 
   if(has('delay')){
     out.push({id:'delay',st:[
       {lv:'go',t:'調整服藥時機與飲食',d:'空腹服藥（餐前 30–60 分鐘或餐後 1–2 小時）；蛋白質重新分配，白天低蛋白、晚餐集中攝取。'},
-      {lv:'go',t:'改善胃腸吸收',d:'積極處理便秘與胃排空延遲；檢測並根除幽門螺旋桿菌；需要時短期使用 domperidone（注意 QT 延長與劑量上限）。'},
+      {lv:'go',t:'改善胃腸吸收',d:'積極處理便秘與胃排空延遲；可檢測幽門螺旋桿菌（MDS 2025：根除對運動波動證據不足）；需要時短期使用 domperidone（注意 QT 延長與劑量上限）。'},
       {lv:'consider',t:'加速起效的劑型',d:'速效分散錠或將錠劑溶於水中服用（依院內可取得劑型）；避免以控釋劑型做為白天主要劑量。'},
-      {lv:'consider',t:'救援治療',ev:EV18,d:'間歇性皮下 apomorphine 注射可快速解除 OFF（依可取得性）。頻繁發生時評估連續輸注或 DBS。'}
+      {lv:'consider',t:'救援治療',ev:EV25('間歇 apomorphine 證據不足'),d:'間歇性皮下 apomorphine 注射在 2018 年評為臨床有用，2025 年新方法評為證據不足；吸入型 levodopa 未列入該回顧（皆依可取得性）。頻繁發生時評估連續輸注或 DBS。'}
     ]});
   }
 
   if(has('onoff')){
     out.push({id:'onoff',st:[
-      {lv:'go',t:'減少血中濃度波動',d:'避免大劑量單次給藥，改為小劑量多次；加 COMT 抑制劑或長效致效劑提升持續性。',a:c.n<8?A('套用：小劑量多次',r=>fractionate(r,0.85)):null},
-      {lv:'consider',t:'連續多巴胺刺激',ev:EV18,d:'無法預期的 ON-OFF 是口服治療的極限表現。優先評估 LCIG、皮下 levodopa 或 apomorphine 輸注，以及 STN/GPi-DBS。'}
+      {lv:'go',t:'減少血中濃度波動',d:'避免大劑量單次給藥，改為小劑量多次；加 COMT 抑制劑或長效致效劑提升持續性。',a:c.n<8?A('套用：小劑量多次',r=>fractionate(r,0.85),'frac'):null},
+      {lv:'consider',t:'連續多巴胺刺激',ev:'MDS 2025',d:'無法預期的 ON-OFF 是口服治療的極限表現。優先評估 STN-DBS（有效），或 GPi-DBS、腸道 levodopa、皮下 foslevodopa、連續皮下 apomorphine（很可能有效）。'}
     ]});
   }
 
   if(has('morning')){
     out.push({id:'morning',st:[
-      {lv:'go',t:'睡前加控釋 levodopa',d:'睡前 levodopa CR/HBS 100–200 mg，延長夜間覆蓋；或 opicapone 睡前服用。',a:c.cr===0?A('套用：睡前 CR 200 mg',r=>{r.cr=200;}):null},
+      {lv:'go',t:'睡前加控釋 levodopa',ev:EV25('CR 對運動波動證據不足'),d:'睡前 levodopa CR/HBS 100–200 mg，延長夜間覆蓋（臨床常用）；或 opicapone 睡前服用。',a:c.cr===0?A('套用：睡前 CR 200 mg',r=>{r.cr=200;}):null},
       {lv:daBad?'avoid':'consider',t:'夜間持續刺激：rotigotine 貼片或長效致效劑',ev:EV18,d:daBad?'此患者有致效劑相對禁忌，優先選擇 levodopa 劑型調整。':'24 小時穿皮吸收可改善清晨運動症狀與夜間睡眠。',a:!daBad&&c.da==='none'?A('套用：rotigotine 4 mg',r=>{r.da='rot';r.dadose=4;}):null},
       {lv:'consider',t:'清晨第一劑',d:'清醒時立即服用首劑（床邊備藥）、可用速效分散劑型；首劑時間提早。',a:A('套用：首劑提早 1 小時',r=>{r.first=Math.max(4,r.first-1);})},
       {lv:'consider',t:'持續局部足部肌張力不全',d:'口服調整後仍存在時，可局部注射肉毒桿菌素。'}
@@ -763,7 +941,7 @@ function buildRecs(){
 
   if(has('night')){
     out.push({id:'night',st:[
-      {lv:'go',t:'睡前控釋 levodopa 或 opicapone',d:'改善夜間翻身困難與夜尿時下床行動。',a:c.cr===0?A('套用：睡前 CR 200 mg',r=>{r.cr=200;}):null},
+      {lv:'go',t:'睡前控釋 levodopa 或 opicapone',ev:EV25('CR 對運動波動證據不足'),d:'用於夜間翻身困難與夜尿時下床行動（臨床常用）。',a:c.cr===0?A('套用：睡前 CR 200 mg',r=>{r.cr=200;}):null},
       {lv:daBad?'avoid':'consider',t:'Rotigotine 貼片',d:daBad?'此患者不建議新增致效劑。':'夜間持續刺激；注意貼片部位皮膚反應。'},
       {lv:'consider',t:'排除其他夜間問題',d:'REM 睡眠行為障礙、夜尿、不寧腿、睡眠呼吸中止、憂鬱。'}
     ]});
@@ -772,13 +950,13 @@ function buildRecs(){
   if(has('pdk')){
     const st=[];
     st.push({lv:'go',t:'降低單次 levodopa 劑量、增加次數',d:`目前單次 <b>${c.ld} mg</b>。單次減 20–25%，每日次數增加，使總量相近但峰值降低。${has('wo')?'同時合併劑末減退時，此策略可兩者兼顧。':''}`,
-      a:c.n<8?A('套用：單次減 25%、多一次',r=>fractionate(r,0.75)):A('套用：單次減 25%',r=>{r.ld=round25(r.ld*0.75);})});
+      a:c.n<8?A('套用：單次減 25%、多一次',r=>fractionate(r,0.75),'frac'):A('套用：單次減 25%',r=>{r.ld=round25(r.ld*0.75);})});
     const adj=[c.comt!=='none'&&'COMT 抑制劑',c.maob!=='none'&&'MAO-B 抑制劑',c.da!=='none'&&'多巴胺致效劑'].filter(Boolean);
     if(adj.length&&(elderly||cogImp))st.push({lv:'go',t:'高齡或認知障礙：先減少輔助藥物',d:`目前併用 ${adj.join('、')}。減停輔助藥通常比減少 levodopa 更安全。`,
-      a:A('套用：停用一項輔助藥',r=>{if(r.comt!=='none')r.comt='none';else if(r.da!=='none'){r.da='none';r.dadose=0;}else r.maob='none';})});
+      a:A(`套用：停用${adj[0]}`,r=>{if(c.comt!=='none')r.comt='none';else if(c.da!=='none'){r.da='none';r.dadose=0;}else r.maob='none';})});
     else if(c.comt!=='none')st.push({lv:'consider',t:'COMT 抑制劑可能加重高峰異動',d:'併用 COMT 抑制劑時，levodopa 單次劑量通常需減 10–30%。'});
-    if(amMax===0)st.push({lv:'avoid',t:'Amantadine：eGFR < 30 不建議',d:'腎功能嚴重不全時易蓄積，引起幻覺與混亂。'});
-    else if(c.am<amMax)st.push({lv:psychRisk?'consider':'go',t:c.am?'Amantadine 調升':'加上 amantadine',ev:EV18,d:`${p.egfr==='m'?'eGFR 30–59：上限約 100 mg/日，或隔日給藥。':'100 mg 每日 2 次起，最高 300 mg/日（早、午服用，避免失眠）。'}${psychRisk?'<b>高齡、認知障礙或幻覺者易誘發精神症狀，需小心。</b>':''}副作用：下肢網狀青斑、水腫、幻覺。`,
+    if(amMax===0)st.push({lv:'avoid',t:'Amantadine：eGFR < 30 不建議新增',d:'腎功能嚴重不全時易蓄積，引起幻覺與混亂。仿單：CrCl 15–29 為 100 mg 隔日，&lt;15 為 200 mg 每 7 日。'});
+    else if(c.am<amMax)st.push({lv:psychRisk?'consider':'go',t:c.am?'Amantadine 調升':'加上 amantadine',ev:EV18,d:`${p.egfr==='m'?'eGFR 30–59：上限約 100 mg/日（仿單 CrCl 30–50：首日 200 mg，之後 100 mg/日）。':'100 mg 每日 2 次起，最高 300 mg/日（早、午服用，避免失眠）。'}${psychRisk?'<b>高齡、認知障礙或幻覺者易誘發精神症狀，需小心。</b>':''}副作用：下肢網狀青斑、水腫、幻覺。`,
       a:A(`套用：amantadine ${Math.min(amMax,c.am?c.am+100:(p.egfr==='m'?100:200))} mg`,r=>{r.am=Math.min(amMax,r.am?r.am+100:(p.egfr==='m'?100:200));})});
     st.push({lv:'consider',t:'難治性異動：clozapine 或 DBS',ev:EV18,d:'低劑量 clozapine 需定期監測白血球與嗜中性球；STN 或 GPi-DBS 可同時改善運動波動與異動症。'});
     out.push({id:'pdk',st});
@@ -786,7 +964,7 @@ function buildRecs(){
 
   if(has('bidk')){
     out.push({id:'bidk',st:[
-      {lv:'go',t:'縮短 levodopa 濃度上升與下降期',d:'雙相異動發生在劑初或劑末，與高峰異動相反，常需「增加」多巴胺刺激：縮短間隔、加 COMT 抑制劑或致效劑以減少低谷。',a:c.n<8?A('套用：縮短間隔',r=>fractionate(r,1)):null},
+      {lv:'go',t:'縮短 levodopa 濃度上升與下降期',d:'雙相異動發生在劑初或劑末，與高峰異動相反，常需「增加」多巴胺刺激：縮短間隔、加 COMT 抑制劑或致效劑以減少低谷。',a:c.n<8?A('套用：縮短間隔',r=>fractionate(r,1),'frac'):null},
       {lv:'consider',t:'Amantadine 可嘗試',d:'效果不一。'},
       {lv:'consider',t:'早期評估連續輸注或 DBS',d:'雙相異動口服處理困難，是進階治療的良好適應症。'}
     ]});
@@ -808,15 +986,15 @@ function buildRecs(){
       {lv:'go',t:'先排除誘發因素',d:'感染（泌尿道、肺炎）、脫水、電解質異常、便秘、新加入的鎮靜或抗膽鹼藥、譫妄。'},
       {lv:'go',t:'依序減停抗巴金森藥物',ev:EV19,d:`順序：抗膽鹼藥 → amantadine → MAO-B 抑制劑 → 多巴胺致效劑 → COMT 抑制劑 → 最後才減 levodopa。${present.length?`本患者目前可減：<b>${present.map(o=>o[1]).join(' → ')}</b>。致效劑需逐步減量，避免戒斷症候群。`:'目前僅使用 levodopa，考慮以最低有效劑量維持。'}`,
         a:first?A(`套用：停用${first[1]}`,r=>{const k=first[0];if(k==='ach')r.ach=0;if(k==='am')r.am=0;if(k==='maob')r.maob='none';if(k==='da'){r.da='none';r.dadose=0;}if(k==='comt')r.comt='none';}):null},
-      {lv:cogImp?'go':'consider',t:'膽鹼酯酶抑制劑',ev:EV19,d:`${dem?'已有失智：':''}Rivastigmine 用於巴金森病失智為「臨床有用」，可同時減少幻覺。`},
-      {lv:'consider',t:'抗精神病藥（僅用非典型、低劑量）',ev:EV19,d:'Clozapine 6.25–50 mg（有效，需監測嗜中性球）；pimavanserin（依可取得性）；quetiapine 12.5–50 mg 證據不足但臨床常用。<b>避免 haloperidol、risperidone、olanzapine。</b>'}
+      {lv:cogImp?'go':'consider',t:'膽鹼酯酶抑制劑',ev:EV19,d:`${dem?'已有失智：':''}Rivastigmine 用於巴金森病失智為「臨床有用」；失智試驗中幻覺也有改善。`},
+      {lv:'consider',t:'抗精神病藥（僅用非典型、低劑量）',ev:EV19,d:'Clozapine 6.25–50 mg（有效，需監測嗜中性球）；pimavanserin（依可取得性）；quetiapine 12.5–50 mg 療效證據不足，MDS 列為「可能有用」。<b>避免 haloperidol、risperidone、olanzapine。</b>'}
     ]});
   }
 
   if(has('icd')){
     out.push({id:'icd',st:[
-      {lv:'go',t:'減量或停用多巴胺致效劑',ev:EV19,d:`${c.da!=='none'?`目前 ${DA_INFO[c.da].n} ${c.da?c.dadose:''} mg/日。`:''}最有效的處置。<b>需逐步減量</b>，留意致效劑戒斷症候群（焦慮、憂鬱、疼痛、自主神經症狀）；必要時以 levodopa 補足動作症狀。`,
-        a:c.da!=='none'?A('套用：停致效劑、levodopa 補 LEDD',r=>{const led=r.dadose*DA_INFO[r.da].f;r.da='none';r.dadose=0;if(r.n>0)r.ld=round25(r.ld+led*0.6/r.n);}):null},
+      {lv:'go',t:'減量或停用多巴胺致效劑',ev:EV19,d:`${c.da!=='none'?`目前 ${DA_INFO[c.da].n} ${c.dadose} mg/日。`:''}最有效的處置。<b>需逐步減量</b>，留意致效劑戒斷症候群（焦慮、憂鬱、疼痛、自主神經症狀）；必要時以 levodopa 補足動作症狀。`,
+        a:c.da!=='none'?A('套用：停致效劑、levodopa 補 LEDD',r=>{if(!DA_INFO[r.da])return;const led=r.dadose*DA_INFO[r.da].f;r.da='none';r.dadose=0;if(r.n>0)r.ld=round25(r.ld+led*0.6/r.n);}):null},
       {lv:'go',t:'家屬參與與監督',d:'與照顧者確認賭博、購物、性行為、飲食、刻板重複行為（punding）；財務與網路消費管控。'},
       {lv:'consider',t:'認知行為治療',ev:EV19,d:'「可能有用」。Amantadine 治療 ICD 證據不足。另需警覺 levodopa 過度使用（多巴胺失調症候群）。'}
     ]});
@@ -826,7 +1004,7 @@ function buildRecs(){
     out.push({id:'eds',st:[
       {lv:'go',t:'檢視多巴胺致效劑與鎮靜藥',d:`突發睡眠與致效劑劑量相關，考慮減量${c.da!=='none'?'（目前使用中）':''}；停用不必要的鎮靜安眠藥與抗組織胺。`,a:c.da!=='none'?A('套用：致效劑減半',r=>{r.dadose=+(r.dadose/2).toFixed(3);}):null},
       {lv:'go',t:'駕駛安全',d:'有突發睡眠者應告知暫停駕駛，並記錄於病歷。'},
-      {lv:'consider',t:'評估夜間睡眠',d:'睡眠呼吸中止、REM 睡眠行為障礙、夜間 OFF；modafinil 證據有限。'}
+      {lv:'consider',t:'評估夜間睡眠',d:'睡眠呼吸中止、REM 睡眠行為障礙、夜間 OFF；modafinil 療效證據不足，MDS 列為「可能有用」。'}
     ]});
   }
 
@@ -834,22 +1012,24 @@ function buildRecs(){
     out.push({id:'oh',st:[
       {lv:'go',t:'檢視加重低血壓的藥物',d:'降壓藥、利尿劑、α 阻斷劑（如 tamsulosin）、三環抗憂鬱劑、硝酸鹽類；多巴胺致效劑與 MAO-B 抑制劑也可能加重。'},
       {lv:'go',t:'非藥物處置',d:'無禁忌時增加水分與鹽分攝取、床頭抬高 10–20 度、彈性襪或腹帶、緩慢起身、少量多餐。'},
-      {lv:'consider',t:'升壓藥物',d:'Midodrine、fludrocortisone 或 droxidopa（依可取得性），證據有限；監測臥位高血壓。'}
+      {lv:'consider',t:'升壓藥物',d:'Midodrine、fludrocortisone 或 droxidopa（依可取得性），MDS 2019 皆列為「可能有用」，droxidopa 僅有短期資料；監測臥位高血壓。'}
     ]});
   }
   return out;
 }
 
 /* ---- alerts ---- */
-function buildAlerts(simC){
+function buildAlerts(){
   const p=S.pt,c=S.cur,A=[];
   const n5=c.n>=5,o2=p.offh>=2,d1=p.dyskh>=1;
   if(n5||o2||d1){
     A.push(`<div class="alert warn"><strong>符合 5-2-1 準則：建議評估進階治療</strong><span class="small">${[n5&&`每日 levodopa ${c.n} 次（≥5）`,o2&&`OFF ${p.offh} 小時（≥2）`,d1&&`困擾性異動 ${p.dyskh} 小時（≥1）`].filter(Boolean).join('；')}。轉介動作障礙專科評估 DBS、LCIG 或皮下輸注。</span></div>`);
   }
   if(p.age>=70||p.cog!=='none')A.push(`<div class="alert warn"><strong>${p.age>=70?'高齡':''}${p.age>=70&&p.cog!=='none'?'且':''}${p.cog!=='none'?'認知障礙':''}：以 levodopa 為主軸</strong><span class="small">避免新增抗膽鹼藥與多巴胺致效劑；amantadine 小心使用。${c.ach?'<b>目前仍在使用抗膽鹼藥，建議逐步停用。</b>':''}</span></div>`);
-  if(c.am>0&&p.egfr!=='n')A.push(`<div class="alert stop"><strong>Amantadine 與腎功能</strong><span class="small">eGFR ${p.egfr==='m'?'30–59：建議 ≤100 mg/日':'< 30：建議停用'}，目前 ${c.am} mg/日。</span></div>`);
-  if(c.comt==='ent'&&c.n>8)A.push(`<div class="alert stop"><strong>Entacapone 超過每日 8 顆</strong><span class="small">每日最多 1600 mg。</span></div>`);
+  const wc=PDE.regWarnings(c,p),wp=PDE.regWarnings(S.prop,p),same=(x,l)=>l.some(y=>y.t===x.t&&y.d===x.d);
+  const pushW=(x,tag)=>A.push(`<div class="alert ${x.lv}"><strong>${tag}${esc(x.t)}</strong><span class="small">${esc(x.d)}</span></div>`);
+  wc.forEach(x=>pushW(x,same(x,wp)?'':'目前處方：'));
+  wp.filter(x=>!same(x,wc)).forEach(x=>pushW(x,'調整後處方：'));
   if(c.da!=='none'&&(S.probs.has('hallu')||S.probs.has('icd')))A.push(`<div class="alert stop"><strong>使用致效劑且出現${S.probs.has('hallu')?'幻覺':''}${S.probs.has('hallu')&&S.probs.has('icd')?'與':''}${S.probs.has('icd')?'衝動控制障礙':''}</strong><span class="small">應優先處理，見下方建議。</span></div>`);
   if(!S.probs.size)A.push(`<div class="alert go"><strong>尚未選擇任何狀況</strong><span class="small">在左側「目前出現的狀況」點選，建議會依患者背景與目前處方產生。</span></div>`);
   if(!A.length)A.push(`<div class="alert go"><strong>無特別警示</strong><span class="small">目前處方與患者背景沒有明顯衝突。</span></div>`);
@@ -858,28 +1038,32 @@ function buildAlerts(simC){
 
 /* ---- chart ---- */
 function drawChart(a,b){
-  const W=760,H=250,L=40,R=12,T=14,B=30,pw=W-L-R,ph=H-T-B;
+  const W=760,H=262,L=40,R=12,T=14,B=44,pw=W-L-R,ph=H-T-B,T0=PDE.T0,{wake:w0,sleep:w1}=S.pt,T1=T0+24;
   const maxC=Math.max(...a.pts.map(p=>p[1]),...b.pts.map(p=>p[1]));
   const yMax=Math.max(1.6,a.thrDysk*1.25,b.thrDysk*1.25,maxC*1.08);
-  const x=t=>L+(t-6)/24*pw,y=v=>T+ph-(Math.min(v,yMax)/yMax)*ph;
+  const x=t=>L+(t-T0)/24*pw,y=v=>T+ph-(Math.min(v,yMax)/yMax)*ph;
   let s='';
   const fb=b.thrOff,db=b.thrDysk;
   s+=`<rect class="b-dysk" x="${L}" y="${T}" width="${pw}" height="${y(db)-T}"/>`;
   s+=`<rect class="b-on" x="${L}" y="${y(db)}" width="${pw}" height="${y(fb)-y(db)}"/>`;
   s+=`<rect class="b-off" x="${L}" y="${y(fb)}" width="${pw}" height="${T+ph-y(fb)}"/>`;
-  const w0=S.prop.first,w1=S.prop.first+16;
-  if(w0>6)s+=`<rect class="night" x="${x(6)}" y="${T}" width="${x(w0)-x(6)}" height="${ph}"/>`;
-  if(w1<30)s+=`<rect class="night" x="${x(w1)}" y="${T}" width="${x(30)-x(w1)}" height="${ph}"/>`;
-  for(let t=6;t<=30;t+=3){s+=`<line class="grid" x1="${x(t)}" y1="${T}" x2="${x(t)}" y2="${T+ph}"/><text x="${x(t)}" y="${H-12}" text-anchor="middle">${String(t%24).padStart(2,'0')}:00</text>`;}
+  if(w0>T0)s+=`<rect class="night" x="${x(T0)}" y="${T}" width="${x(w0)-x(T0)}" height="${ph}"/>`;
+  s+=`<rect class="night" x="${x(w1)}" y="${T}" width="${x(T1)-x(w1)}" height="${ph}"/>`;
+  for(let t=T0;t<=T1;t+=3){
+    const anchor=t===T0?'start':t===T1?'end':'middle';
+    s+=`<line class="grid" x1="${x(t)}" y1="${T}" x2="${x(t)}" y2="${T+ph}"/><text x="${x(t)}" y="${H-14}" text-anchor="${anchor}">${String(t%24).padStart(2,'0')}:00</text>`;
+  }
   s+=`<line class="axis" x1="${L}" y1="${T+ph}" x2="${L+pw}" y2="${T+ph}"/>`;
   s+=`<line class="thr-off" x1="${L}" y1="${y(fb)}" x2="${L+pw}" y2="${y(fb)}"/><line class="thr-dysk" x1="${L}" y1="${y(db)}" x2="${L+pw}" y2="${y(db)}"/>`;
+  if(Math.abs(a.thrDysk-db)>1e-6)s+=`<line class="thr-dysk-cur" x1="${L}" y1="${y(a.thrDysk)}" x2="${L+pw}" y2="${y(a.thrDysk)}"/>`;
   s+=`<text class="lbl t-dysk" x="${L+6}" y="${T+13}">異動症</text><text class="lbl t-on" x="${L+6}" y="${(y(db)+y(fb))/2+4}">ON</text><text class="lbl t-off" x="${L+6}" y="${T+ph-6}">OFF</text>`;
-  if(w1<30)s+=`<text x="${x((w1+30)/2)}" y="${T+13}" text-anchor="middle">睡眠</text>`;
+  s+=`<text x="${x((w1+T1)/2)}" y="${T+13}" text-anchor="middle">睡眠</text>`;
   const path=pts=>'M'+pts.map(p=>x(p[0]).toFixed(1)+','+y(p[1]).toFixed(1)).join('L');
   s+=`<path class="c-cur" d="${path(a.pts)}"/><path class="c-prop" d="${path(b.pts)}"/>`;
-  const mk=(r,cls,off)=>{let q='';doseTimes(r).forEach(t=>{q+=`<path class="${cls}" d="M${x(t)},${T+ph+off} l-4,6 h8z"/>`;});if(r.cr>0)q+=`<rect class="${cls}" x="${x(22)-3.5}" y="${T+ph+off+1}" width="7" height="5"/>`;return q;};
+  const mk=(r,cls,off)=>{let q='';doseTimes(r).forEach(t=>{q+=`<path class="${cls}" d="M${x(PDE.inDay(t)).toFixed(1)},${T+ph+off} l-4,6 h8z"/>`;});if(r.cr>0)q+=`<rect class="${cls}" x="${x(PDE.inDay(w1))-3.5}" y="${T+ph+off+1}" width="7" height="5"/>`;return q;};
   s+=mk(S.cur,'dose-cur',1)+mk(S.prop,'dose-prop',9);
-  $('#chart').innerHTML=s;
+  const el=$('#chart');el.innerHTML=s;
+  el.setAttribute('aria-label',`24 小時 levodopa 效應曲線。清醒期 OFF：目前 ${a.off.toFixed(1)} 小時，調整後 ${b.off.toFixed(1)} 小時；異動：目前 ${a.dy.toFixed(1)} 小時，調整後 ${b.dy.toFixed(1)} 小時。`);
 }
 
 function kpi(label,v1,v2,unit,lowerBetter){
@@ -893,7 +1077,7 @@ const PNAME=Object.fromEntries(PROBS.map(p=>[p.id,p.t]));
 let lastRecs=[];
 function renderSim(keepForm){
   if(!keepForm){fillReg();}
-  const a=simulate(S.cur,S.pt.years),b=simulate(S.prop,S.pt.years);
+  const a=simulate(S.cur,S.pt.years,S.pt.wake,S.pt.sleep),b=simulate(S.prop,S.pt.years,S.pt.wake,S.pt.sleep);
   drawChart(a,b);
   $('#kpis').innerHTML=
     kpi('模擬清醒期 OFF',+a.off.toFixed(1),+b.off.toFixed(1),'h',true)+
@@ -902,7 +1086,7 @@ function renderSim(keepForm){
     kpi('levodopa 次數',S.cur.n,S.prop.n,'次/日',null);
   $('#alerts').innerHTML=buildAlerts();
   const recs=buildRecs();lastRecs=recs;
-  $('#recs').innerHTML=recs.length?recs.map(g=>`<div class="prob"><div class="prob-h"><h3>${esc(PNAME[g.id])}</h3><small>${g.st.length} 階</small></div><ol class="ladder">${g.st.map(s=>`<li class="lv-${s.lv}"><div><div class="step-t">${s.t}${s.ev?` <span class="pill ev">${s.ev}</span>`:''}${s.lv==='avoid'?' <span class="pill stop">不建議</span>':''}</div><div class="step-d">${s.d}</div>${s.a?`<div class="step-a"><button class="btn" data-apply="${s.a.idx}">${esc(s.a.label)}</button></div>`:''}</div></li>`).join('')}</ol></div>`).join('')
+  $('#recs').innerHTML=recs.length?recs.map(g=>`<div class="prob"><div class="prob-h"><h3>${esc(PNAME[g.id])}</h3><small>${g.st.length} 階</small></div><ol class="ladder">${g.st.map(s=>`<li class="lv-${s.lv}"><div><div class="step-t">${s.t}${s.ev?` <span class="pill ev">${s.ev}</span>`:''}${s.lv==='avoid'?' <span class="pill stop">不建議</span>':''}</div><div class="step-d">${s.d}</div>${s.a?`<div class="step-a">${S.applied.has(s.a.key)?`<button type="button" class="btn" disabled>✓ 已套用${s.a.key==='frac'?'分次調整':''}</button>`:`<button type="button" class="btn" data-apply="${s.a.idx}">${esc(s.a.label)}</button>`}</div>`:''}</div></li>`).join('')}</ol></div>`).join('')
     :'<p class="muted">選擇左側的狀況後，這裡會依序列出處理步驟。</p>';
   document.querySelectorAll('[data-apply]').forEach(bt=>bt.addEventListener('click',()=>applyRec(+bt.dataset.apply)));
 }
@@ -910,18 +1094,18 @@ $('#copy-sum').addEventListener('click',()=>{
   const p=S.pt,cogT={none:'認知正常',mci:'輕度認知障礙',dem:'失智'}[p.cog];
   const L=[];
   L.push(`【巴金森病用藥調整】${p.age} 歲，病程 ${p.years} 年，${cogT}，eGFR ${({n:'≥60',m:'30–59',s:'<30'})[p.egfr]}`);
-  L.push(`日誌：OFF ${p.offh} h/日，困擾性異動 ${p.dyskh} h/日`);
+  L.push(`日誌：OFF ${p.offh} h/日，困擾性異動 ${p.dyskh} h/日；作息 ${fmtT(p.wake)}–${fmtT(p.sleep)}${p.icdrisk?'；有衝動控制障礙危險因子':''}`);
   L.push(`問題：${[...S.probs].map(k=>PNAME[k]).join('、')||'未選擇'}`);
   L.push(`目前處方（LEDD ${ledd(S.cur)} mg）：${regText(S.cur).join('；')||'無'}`);
   L.push(`調整後處方（LEDD ${ledd(S.prop)} mg）：${regText(S.prop).join('；')||'無'}`);
   lastRecs.forEach(g=>{L.push(`▸ ${PNAME[g.id]}：`+g.st.filter(s=>s.lv!=='avoid').map((s,i)=>`${i+1}. ${s.t.replace(/<[^>]+>/g,'')}`).join('  '));});
-  L.push('依據：MDS EBM 2018／2019、MDS 2015 診斷標準、台灣動作障礙學會共識。');
+  L.push('依據：MDS EBM 2018／2019／2025、AAN 2021、MDS 2015 診斷標準、台灣動作障礙學會共識。');
   copyText(L.join('\n'));
 });
 
 /* ---- init ---- */
 buildDx();renderDx();renderInit();buildProbChips();fillPt();
-S.prop={...S.cur};fractionate(S.prop,0.75);S.propTouched=true;
+S.prop={...S.cur};fractionate(S.prop,0.75);S.applied.add('frac'); /* sample proposal: replaced as soon as the current regimen is edited */
 showTab(startTab);
 if(startTab!=='sim')renderSim();
 })();
