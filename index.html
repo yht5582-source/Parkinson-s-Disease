@@ -235,12 +235,20 @@ ol.refs a{color:var(--accent)}
 .q-opt.bad{background:var(--off-soft);border-color:var(--off)}
 .q-exp{margin-top:8px;font-size:13.8px;border-left:3px solid var(--line);padding:2px 0 2px 12px;color:var(--ink-2)}
 .q-exp strong{color:var(--ink)}
-.mindmap{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.map-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.map-bar p{max-width:70ch}
+.mindmap{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px 16px;align-items:start}
+.mm-b{padding:0}
+.mm-b h3{margin:0;display:block}
+.mm-btn{appearance:none;width:100%;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;gap:8px;justify-content:space-between;align-items:baseline;border-radius:6px}
+.mm-btn i{font-style:normal;font-family:var(--f-mono);font-weight:400;color:var(--ink-3);flex:none}
+.mm-btn:hover i{color:var(--accent)}
+.mm-b h3 .mm-btn{padding:13px 18px}
+.mm-b li>.mm-btn{font-weight:500;padding:0}
 .mm-b h3{color:var(--accent)}
 .mm-b ul{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--line);display:grid;gap:6px;font-size:14px}
-.mm-b>ul{padding-left:12px}
+.card.mm-b>ul{margin:0 18px 16px;padding-left:12px}
 .mm-b li ul{margin-top:6px;font-size:13.5px;color:var(--ink-2)}
-.mm-b li>span b{font-weight:500}
 @media (max-width:620px){input[type=number],select{font-size:16px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -545,7 +553,7 @@ ol.refs a{color:var(--accent)}
         </ol>
       </div>
     </div>
-    <p class="disclaimer">本工具為臨床決策輔助與教學用途，示範病例皆為虛構，建議內容依據上述指引歸納，不能取代醫師對個別患者的完整評估。藥物劑量、禁忌與交互作用請以仿單及院內處方集為準。版本 v2.2.1（2026-11-05）。</p>
+    <p class="disclaimer">本工具為臨床決策輔助與教學用途，示範病例皆為虛構，建議內容依據上述指引歸納，不能取代醫師對個別患者的完整評估。藥物劑量、禁忌與交互作用請以仿單及院內處方集為準。版本 v2.2.2（2026-11-05）。</p>
   </section>
 
   <!-- ============ 5. Cases ============ -->
@@ -565,7 +573,7 @@ ol.refs a{color:var(--accent)}
 
   <!-- ============ 7. Mind map ============ -->
   <section class="pane" id="map" role="tabpanel" aria-labelledby="tab-map" hidden>
-    <p class="muted teach-intro">本頁重點的總覽。Rotigotine、entacapone 與 opicapone 的限制依文獻分頁的台灣仿單核對表。</p>
+    <div class="map-bar"><p class="muted">點分支展開或收合。Rotigotine、entacapone 與 opicapone 的限制依文獻分頁的台灣仿單核對表。</p><div class="row"><button type="button" class="btn" id="map-open">全部展開</button><button type="button" class="btn" id="map-close">全部收合</button></div></div>
     <div class="mindmap" id="map-tree"></div>
   </section>
 </div>
@@ -1341,9 +1349,31 @@ function renderQuiz(){
 }
 $('#quiz-reset').addEventListener('click',()=>{for(const k in QZ)delete QZ[k];renderQuiz();window.scrollTo(0,0);toast('已清除作答');});
 function renderMap(){
-  const node=n=>typeof n==='string'?`<li><span>${esc(n)}</span></li>`:`<li><span>${n.c?'<b>'+esc(n.t)+'</b>':esc(n.t)}</span>${n.c?`<ul>${n.c.map(node).join('')}</ul>`:''}</li>`;
-  $('#map-tree').innerHTML=MINDMAP.map(b=>`<div class="card mm-b"><h3>${esc(b.t)}</h3><ul>${b.c.map(node).join('')}</ul></div>`).join('');
+  let uid=0;
+  const toggle=(t,id,open)=>`<button type="button" class="mm-btn" aria-expanded="${open}" aria-controls="${id}"><span>${esc(t)}</span><i aria-hidden="true">${open?'－':'＋'}</i></button>`;
+  const node=n=>{
+    if(typeof n==='string')return`<li><span>${esc(n)}</span></li>`;
+    if(!n.c)return`<li><span>${esc(n.t)}</span></li>`;
+    const id='mm-'+(++uid);
+    return`<li>${toggle(n.t,id,true)}<ul id="${id}">${n.c.map(node).join('')}</ul></li>`;
+  };
+  $('#map-tree').innerHTML=MINDMAP.map(b=>{
+    const id='mm-'+(++uid);
+    return`<div class="card mm-b"><h3>${toggle(b.t,id,false)}</h3><ul id="${id}" hidden>${b.c.map(node).join('')}</ul></div>`;
+  }).join('');
 }
+function setMapNode(btn,open){
+  btn.setAttribute('aria-expanded',String(open));
+  btn.querySelector('i').textContent=open?'－':'＋';
+  document.getElementById(btn.getAttribute('aria-controls')).hidden=!open;
+}
+$('#map-tree').addEventListener('click',e=>{
+  const b=e.target.closest('.mm-btn');if(!b)return;
+  setMapNode(b,b.getAttribute('aria-expanded')!=='true');
+});
+/* collapse-all also reopens the inner levels, so the next branch opened shows its full content */
+$('#map-open').addEventListener('click',()=>document.querySelectorAll('#map-tree .mm-btn').forEach(b=>setMapNode(b,true)));
+$('#map-close').addEventListener('click',()=>document.querySelectorAll('#map-tree .mm-btn').forEach(b=>setMapNode(b,!!b.closest('li'))));
 
 /* ---- init ---- */
 buildDx();renderDx();renderInit();buildProbChips();fillPt();renderCases();renderQuiz();renderMap();
