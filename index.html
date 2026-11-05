@@ -211,6 +211,36 @@ ul.plain{margin:6px 0 0;padding-left:18px;display:grid;gap:4px;font-size:14px}
 ol.refs{padding-left:20px;margin:0;display:grid;gap:8px;font-size:13.8px}
 ol.refs a{color:var(--accent)}
 .disclaimer{margin-top:22px;font-size:13px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:14px;max-width:90ch}
+/* teaching tabs */
+.teach-intro{margin-bottom:14px;max-width:80ch}
+.cases{display:grid;gap:16px}
+.case h3{margin-bottom:6px}
+.case-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 22px;margin-top:10px}
+@media (max-width:820px){.case-grid{grid-template-columns:minmax(0,1fr)}}
+.case-out{background:var(--paper);border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;font-size:14px}
+.case .btn{margin-top:12px}
+.quiz-bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.quiz-score{font-size:14px;color:var(--ink-2)}
+.quiz-score b{font-family:var(--f-mono);font-weight:500;color:var(--ink)}
+.quiz-sec{margin:20px 0 10px}
+.q{margin-bottom:12px}
+.q-t{font-weight:500;margin-bottom:8px}
+.q-t .no{font-family:var(--f-mono);color:var(--ink-3);margin-right:6px}
+.q-opts{display:grid;gap:6px}
+.q-opt{appearance:none;font:inherit;font-size:14px;text-align:left;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:8px 11px;cursor:pointer;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px}
+.q-opt:hover:not(:disabled){border-color:var(--accent)}
+.q-opt:disabled{cursor:default}
+.q-opt b{font-family:var(--f-mono);font-weight:500;color:var(--ink-2)}
+.q-opt.ok{background:var(--on-soft);border-color:var(--on)}
+.q-opt.bad{background:var(--off-soft);border-color:var(--off)}
+.q-exp{margin-top:8px;font-size:13.8px;border-left:3px solid var(--line);padding:2px 0 2px 12px;color:var(--ink-2)}
+.q-exp strong{color:var(--ink)}
+.mindmap{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.mm-b h3{color:var(--accent)}
+.mm-b ul{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--line);display:grid;gap:6px;font-size:14px}
+.mm-b>ul{padding-left:12px}
+.mm-b li ul{margin-top:6px;font-size:13.5px;color:var(--ink-2)}
+.mm-b li>span b{font-weight:500}
 @media (max-width:620px){input[type=number],select{font-size:16px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -229,6 +259,9 @@ ol.refs a{color:var(--accent)}
       <button type="button" class="tab" role="tab" id="tab-init" aria-controls="init" data-t="init"><b>2</b>起始治療</button>
       <button type="button" class="tab" role="tab" id="tab-sim" aria-controls="sim" data-t="sim"><b>3</b>運動併發症調整模擬器</button>
       <button type="button" class="tab" role="tab" id="tab-ref" aria-controls="ref" data-t="ref"><b>4</b>LEDD 換算與文獻</button>
+      <button type="button" class="tab" role="tab" id="tab-cases" aria-controls="cases" data-t="cases"><b>5</b>示範病例</button>
+      <button type="button" class="tab" role="tab" id="tab-quiz" aria-controls="quiz" data-t="quiz"><b>6</b>考題</button>
+      <button type="button" class="tab" role="tab" id="tab-map" aria-controls="map" data-t="map"><b>7</b>心智圖</button>
     </nav>
   </header>
 
@@ -512,7 +545,28 @@ ol.refs a{color:var(--accent)}
         </ol>
       </div>
     </div>
-    <p class="disclaimer">本工具為臨床決策輔助與教學用途，建議內容依據上述指引歸納，不能取代醫師對個別患者的完整評估。藥物劑量、禁忌與交互作用請以仿單及院內處方集為準。版本 v2.1（2026-11-05）。</p>
+    <p class="disclaimer">本工具為臨床決策輔助與教學用途，示範病例皆為虛構，建議內容依據上述指引歸納，不能取代醫師對個別患者的完整評估。藥物劑量、禁忌與交互作用請以仿單及院內處方集為準。版本 v2.2（2026-11-05）。</p>
+  </section>
+
+  <!-- ============ 5. Cases ============ -->
+  <section class="pane" id="cases" role="tabpanel" aria-labelledby="tab-cases" hidden>
+    <p class="muted teach-intro">6 個虛構病例，涵蓋診斷、起始治療與運動併發症調藥。工具結果由目前的計算引擎即時算出；模擬時數是示意值，不一定等於病例的日誌時數，請看前後變化的方向。按「帶入」會覆蓋該分頁目前的輸入。</p>
+    <div class="cases" id="case-list"></div>
+  </section>
+
+  <!-- ============ 6. Quiz ============ -->
+  <section class="pane" id="quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+    <div class="quiz-bar">
+      <p class="muted">基礎 10 題、高階 10 題，單選。選答後立即顯示解析，重新整理或離開頁面不保留作答。</p>
+      <div class="row" style="align-items:center"><span class="quiz-score" id="quiz-score" aria-live="polite"></span><button type="button" class="btn" id="quiz-reset">重新作答</button></div>
+    </div>
+    <div id="quiz-list"></div>
+  </section>
+
+  <!-- ============ 7. Mind map ============ -->
+  <section class="pane" id="map" role="tabpanel" aria-labelledby="tab-map" hidden>
+    <p class="muted teach-intro">本頁重點的總覽。Rotigotine、entacapone 與 opicapone 的限制依文獻分頁的台灣仿單核對表。</p>
+    <div class="mindmap" id="map-tree"></div>
   </section>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -655,6 +709,111 @@ if(typeof module!=='undefined')module.exports=PDE;
 </script>
 
 <script>
+/*CASES-START*/
+const CASES=[
+ {id:1,tool:'dx',tag:'診斷',title:'右手靜止型顫抖的 62 歲男性',
+  story:'右手靜止型顫抖 2 年，寫字變小。檢查：手指敲擊幅度遞減、右側僵硬，有嗅覺喪失。Levodopa 100 mg 每日 3 次後動作明顯改善。無小腦、眼動或早期自主神經問題。',
+  dx:{core:{brady:true,tremor:true,rigid:true},ex:[],rf:[],sp:[0,2,3]},
+  points:['先確認巴金森症候群，再判斷病因。','支持條件 3 項（藥物反應、肢體靜止型顫抖、嗅覺喪失），無紅旗，符合臨床確立。','記錄 MDS-UPDRS 與 Hoehn & Yahr 做為基準。']},
+ {id:2,tool:'dx',tag:'診斷',title:'發病 3 年內反覆跌倒的 66 歲女性',
+  story:'動作緩慢與僵硬 3 年，雙側症狀，近 1 年跌倒 4 次。站立 3 分鐘內收縮壓下降 35 mmHg，非藥物或脫水所致；夜間有吸氣喘鳴。Levodopa 600 mg/日 只有輕微改善。',
+  dx:{core:{brady:true,tremor:false,rigid:true},ex:[],rf:[3,4,5],sp:[]},
+  points:['紅旗 3 項（吸氣性呼吸障礙、嚴重自主神經衰竭、早期反覆跌倒），超過 2 項就不符合。','工具只判定不符合巴金森病，不代表已確診其他疾病。','應轉介動作障礙專科，並考慮多系統萎縮等非典型巴金森症候群。']},
+ {id:3,tool:'init',tag:'起始治療',title:'有賭博病史的 52 歲會計師',
+  story:'新診斷巴金森病，右手顫抖影響打字與工作。認知正常，無低血壓或嗜睡。曾因賭博問題接受諮商。',
+  init:{age:52,impact:'func',tremor:true,cog:false,icd:true,eds:false,oh:false},
+  points:['年輕不等於應首選致效劑；衝動控制風險會把它往後排。','AAN 2021：致效劑的衝動控制障礙風險高於 levodopa；levodopa 動作改善較好，但較易異動。','以最低有效劑量起始；抗膽鹼藥只在年輕、顫抖為主且認知正常時才列入考慮。']},
+ {id:4,tool:'sim',tag:'運動併發症',title:'Wearing-off 合併高峰異動的 64 歲女性',
+  story:'病程 8 年。Levodopa 200 mg 每 4 小時共 4 次，每劑約 3 小時後藥效消退，服藥後 1 小時出現困擾性舞蹈樣動作。日誌 OFF 3 小時、異動 2 小時。認知與腎功能正常。',
+  sim:{pt:{age:64,years:8,cog:'none',egfr:'n',offh:3,dyskh:2,wake:7,sleep:23,icdrisk:false},probs:['wo','pdk'],
+    cur:{ld:200,n:4,first:7,int:4,cr:0,comt:'none',maob:'none',da:'none',dadose:0,am:0,ach:0},
+    prop:{ld:150,n:5,first:7,int:3,cr:0,comt:'none',maob:'none',da:'none',dadose:0,am:200,ach:0}},
+  plan:'單次減 25%、增加一次，並加上 amantadine 200 mg/日（早、午服用）。',
+  points:['先降峰值、縮短間隔，再用 amantadine 處理異動（MDS 2018 臨床有用）。LEDD 上升來自 amantadine，levodopa 總量其實略減。','若改加 COMT 抑制劑，levodopa 要減更多：在這個模型裡，125 mg × 5 次加 opicapone 的異動反而增加。','OFF 與困擾性異動都達 5-2-1 門檻，應同步轉介評估進階治療。']},
+ {id:5,tool:'sim',tag:'藥物副作用',title:'致效劑引發賭博行為的 56 歲男性',
+  story:'病程 6 年，pramipexole ER 3 mg/日 加 levodopa 100 mg 每日 3 次。太太發現他半年內線上賭博花掉積蓄，患者本人未主動提起。日誌 OFF 1 小時，無異動。',
+  sim:{pt:{age:56,years:6,cog:'none',egfr:'n',offh:1,dyskh:0,wake:7,sleep:23,icdrisk:true},probs:['icd'],
+    cur:{ld:100,n:3,first:7,int:5,cr:0,comt:'none',maob:'none',da:'prx',dadose:3,am:0,ach:0},
+    prop:{ld:125,n:5,first:7,int:3,cr:0,comt:'none',maob:'none',da:'none',dadose:0,am:0,ach:0}},
+  plan:'目標是停用 pramipexole，levodopa 改為 125 mg 每日 5 次。調整後處方是終點，不是一次到位。',
+  points:['必須逐步減量，留意致效劑戒斷症候群（焦慮、憂鬱、疼痛、自主神經症狀）。','只加大單次劑量不夠：這個模型中，levodopa 150 mg × 3 次的 OFF 達 6.5 小時，還要增加次數。','請照顧者一起確認行為與財務，患者常不會主動提起。','Amantadine 治療衝動控制障礙的證據不足；認知行為治療列為可能有用。']},
+ {id:6,tool:'sim',tag:'非動作症狀',title:'出現視幻覺的 79 歲失智患者',
+  story:'病程 8 年，巴金森病失智，eGFR 42。用藥：levodopa 100 mg 每日 4 次、ropinirole PR 8 mg、amantadine 200 mg/日、trihexyphenidyl。近 2 週晚上看到陌生人，已排除感染與電解質異常。',
+  sim:{pt:{age:79,years:8,cog:'dem',egfr:'m',offh:1,dyskh:0,wake:7,sleep:23,icdrisk:false},probs:['hallu'],
+    cur:{ld:100,n:4,first:7,int:4,cr:0,comt:'none',maob:'none',da:'rop',dadose:8,am:200,ach:1},
+    prop:{ld:100,n:4,first:7,int:4,cr:0,comt:'none',maob:'none',da:'rop',dadose:8,am:100,ach:0}},
+  plan:'第一步停抗膽鹼藥，並把 amantadine 降到腎功能上限。若幻覺持續，再依序減停 amantadine 與致效劑。',
+  points:['減藥順序：抗膽鹼藥 → amantadine → MAO-B 抑制劑 → 致效劑 → COMT 抑制劑 → 最後才減 levodopa。','Rivastigmine 用於巴金森病失智為臨床有用；抗精神病藥以 clozapine 或 pimavanserin 為先，避免 olanzapine。','Amantadine 200 mg 超過 eGFR 30–59 的建議上限，也可能促成幻覺。']}
+];
+/*CASES-END*/
+
+/*QUIZ-START*/
+const QUIZ=[
+ {id:'b1',lv:'基礎',q:'依 MDS 2015，巴金森症候群的核心定義是？',o:['靜止型顫抖加僵硬與姿勢不穩','動作遲緩加靜止顫抖或僵硬','動作遲緩加上姿勢不穩','僵硬加上步態凍結與跌倒'],a:1,e:'動作遲緩是必要條件，再加靜止型顫抖或僵硬至少一項。姿勢不穩不是核心條件。',s:'Postuma 2015'},
+ {id:'b2',lv:'基礎',q:'無絕對排除條件時，「臨床確立」還需要什麼？',o:['紅旗 ≤2 項且已由支持條件抵銷','至少 1 項支持條件','無紅旗且至少 2 項支持條件','DaT 影像異常且 levodopa 有效'],a:2,e:'臨床確立要求無紅旗、至少 2 項支持條件。A 是「臨床很可能」的條件。',s:'Postuma 2015'},
+ {id:'b3',lv:'基礎',q:'下列何者屬於絕對排除條件？',o:['向下垂直核上性凝視麻痺','嗅覺喪失','肢體靜止型顫抖','Levodopa 引起的異動症'],a:0,e:'向下垂直核上性凝視麻痺提示 PSP，屬絕對排除。其餘三項都是支持條件。',s:'Postuma 2015'},
+ {id:'b4',lv:'基礎',q:'下列何者符合 5-2-1 準則的其中一項？',o:['每日口服 levodopa 4 次','困擾性異動每日 30 分鐘','病程滿 5 年','每日 OFF 時間 2 小時'],a:3,e:'5-2-1 是 levodopa ≥5 次、OFF ≥2 小時、困擾性異動 ≥1 小時。病程長短不在準則內。',s:'Antonini 2018'},
+ {id:'b5',lv:'基礎',q:'Levodopa 100 mg 每日 4 次，加 ropinirole 8 mg/日，LEDD 是多少？',o:['408 mg','480 mg','560 mg','640 mg'],a:2,e:'400 + 8 × 20 = 560 mg。',s:'Tomlinson 2010'},
+ {id:'b6',lv:'基礎',q:'LEAP 試驗對早期使用 levodopa 的結論是？',o:['早期開始可延緩病程','沒有延緩病程的效果','早期開始會加速病程','應等到失能才開始'],a:1,e:'80 週時兩組無顯著差異，沒有疾病修飾效果，也不支持刻意延後。',s:'Verschuur 2019'},
+ {id:'b7',lv:'基礎',q:'排除誘發因素後，幻覺患者通常最先減停哪一類藥？',o:['抗膽鹼藥','Levodopa','COMT 抑制劑','多巴胺致效劑'],a:0,e:'順序是抗膽鹼藥、amantadine、MAO-B 抑制劑、致效劑、COMT 抑制劑，最後才減 levodopa。',s:'本工具建議'},
+ {id:'b8',lv:'基礎',q:'服用致效劑後出現賭博行為，最重要的處置是？',o:['立刻停用 levodopa','加上 amantadine','將致效劑調到上限','逐步減量致效劑'],a:3,e:'減量或停用致效劑是核心處置，且要逐步進行以避免戒斷症候群。Amantadine 證據不足。',s:'Seppi 2019'},
+ {id:'b9',lv:'基礎',q:'Opicapone 的正確服用方式是？',o:['隨每劑 levodopa 一起服用','睡前服用，與 levodopa 間隔 1 小時','早餐時與 levodopa 同服','每日三次，飯後立即服用'],a:1,e:'每日一次、建議睡前，與 levodopa 前後至少間隔 1 小時，服藥前後 1 小時不進食。A 是 entacapone 的用法。',s:'台灣藥品資料'},
+ {id:'b10',lv:'基礎',q:'高峰劑量異動症的第一步調整通常是？',o:['提高單次 levodopa 劑量','加上抗膽鹼藥','降低單次劑量並增加次數','改到餐後立刻服藥'],a:2,e:'降低峰值、維持相近總量。必要時再考慮 amantadine。',s:'本工具建議'},
+ {id:'a1',lv:'高階',q:'有巴金森症候群，無絕對排除，紅旗 2 項、支持條件 1 項。判定為？',o:['臨床確立','臨床很可能','尚未符合巴金森症候群','不符合巴金森病診斷'],a:3,e:'2 項紅旗需要至少 2 項支持條件抵銷，1 項不足。',s:'Postuma 2015'},
+ {id:'a2',lv:'高階',q:'Levodopa 100 mg × 4、睡前 CR 200 mg、opicapone、safinamide 50 mg，LEDD 是多少？',o:['975 mg','825 mg','900 mg','1050 mg'],a:0,e:'Levodopa LED = 400 + 200 × 0.75 = 550；opicapone 加 × 0.5 得 825；safinamide 加 150，共 975 mg。',s:'Jost 2023'},
+ {id:'a3',lv:'高階',q:'Jost 2023 如何換算 safinamide 50 與 100 mg/日？',o:['分別為 50 與 100 mg','分別為 75 與 150 mg','兩者都是 150 mg','不計入 LEDD'],a:2,e:'論文提出單一換算值，兩種劑量都等於速效 levodopa 150 mg。',s:'Jost 2023'},
+ {id:'a4',lv:'高階',q:'MDS 2025 對運動波動的評估，何者為證據不足？',o:['Opicapone','Selegiline','Safinamide','Rotigotine'],a:1,e:'Selegiline 評為證據不足；opicapone、safinamide、rotigotine 都評為有效。',s:'de Bie 2025'},
+ {id:'a5',lv:'高階',q:'MDS 2025 把下列哪一項評為「有效」，而非「很可能有效」？',o:['雙側 GPi-DBS','皮下 foslevodopa 輸注','連續皮下 apomorphine','雙側 STN-DBS'],a:3,e:'雙側 STN-DBS 評為有效；其餘三項評為很可能有效。',s:'de Bie 2025'},
+ {id:'a6',lv:'高階',q:'Tavapadon 的作用機轉是？',o:['D1/D5 部分致效劑','D2/D3 完全致效劑','可逆性 MAO-B 抑制劑','周邊 COMT 抑制劑'],a:0,e:'它選擇性作用於 D1/D5。現有非麥角致效劑主要作用於 D2/D3。',s:'Fernandez 2026'},
+ {id:'a7',lv:'高階',q:'Exenatide 第 3 期試驗（Lancet 2025）的結論是？',o:['顯著延緩動作惡化','因安全性問題提前終止','未證實能延緩病程','只對 levodopa 使用者有效'],a:2,e:'96 週 MDS-UPDRS III 與安慰劑無顯著差異（p=0.47），安全性尚可。',s:'Vijiaratnam 2025'},
+ {id:'a8',lv:'高階',q:'Amantadine 仿單中，CrCl 15–29 的建議劑量是？',o:['100 mg 每日一次','首日 200 mg，之後 100 mg 隔日','200 mg 每 7 日','不需調整'],a:1,e:'CrCl 30–50 是首日 200 mg 後 100 mg/日；<15 與血液透析是 200 mg 每 7 日。此為美國仿單。',s:'DailyMed'},
+ {id:'a9',lv:'高階',q:'MDS 2019 對巴金森病精神病症狀，何者評為「不建議使用」？',o:['Olanzapine','Clozapine','Pimavanserin','Quetiapine'],a:0,e:'Olanzapine 無效且風險不可接受。Clozapine 與 pimavanserin 為臨床有用；quetiapine 證據不足，列為可能有用。',s:'Seppi 2019'},
+ {id:'a10',lv:'高階',q:'雙相異動症的藥物調整方向通常是？',o:['單次劑量直接減半','停用所有多巴胺藥物','改為睡前單次給藥','增加刺激以減少低谷'],a:3,e:'異動發生在劑初與劑末，與高峰異動相反，常需縮短間隔或加上 COMT 抑制劑、致效劑。',s:'本工具建議'}
+];
+/*QUIZ-END*/
+
+/*MAP-START*/
+const MINDMAP=[
+ {t:'診斷（MDS 2015）',c:[
+  {t:'核心：動作遲緩 + 靜止型顫抖或僵硬'},
+  {t:'絕對排除：任一項即不診斷',c:['小腦異常、向下凝視麻痺','藥物引起、功能影像正常']},
+  {t:'臨床確立：無紅旗 + 支持條件 ≥2'},
+  {t:'臨床很可能：紅旗 ≤2 且支持條件 ≥ 紅旗數'}]},
+ {t:'起始治療',c:[
+  {t:'Levodopa：動作改善最好，較易異動',c:['LEAP：不必刻意延後','STRIDE-PD：風險隨劑量上升']},
+  {t:'致效劑：異動較少',c:['衝動控制、嗜睡、水腫、幻覺','高齡或認知障礙避免']},
+  {t:'MAO-B 抑制劑：輕症可用，療效溫和'},
+  {t:'所有患者：運動、物理治療、衛教'}]},
+ {t:'運動波動',c:[
+  {t:'Wearing-off',c:['縮短間隔、增加次數','MDS 2025 有效：opicapone、safinamide','很可能有效：entacapone、rasagiline']},
+  {t:'Delayed-ON：空腹服藥、蛋白質重新分配'},
+  {t:'清晨與夜間：睡前控釋、首劑提早'},
+  {t:'無法預期 ON-OFF：評估連續輸注或 DBS'}]},
+ {t:'異動症',c:[
+  {t:'高峰劑量：減單次、增次數',c:['Amantadine、clozapine（MDS 2018 臨床有用）','高齡先減輔助藥']},
+  {t:'雙相：增加刺激、減少低谷'},
+  {t:'難治：STN 或 GPi-DBS'}]},
+ {t:'非動作症狀與副作用',c:[
+  {t:'幻覺',c:['先排除誘發因素','抗膽鹼藥 → amantadine → MAO-B → 致效劑 → COMT → levodopa','Clozapine、pimavanserin；避免 olanzapine']},
+  {t:'衝動控制障礙：逐步減致效劑，防戒斷'},
+  {t:'突發睡眠：減致效劑、暫停駕駛'},
+  {t:'姿勢性低血壓：先檢視藥物與非藥物處置'}]},
+ {t:'進階治療（5-2-1）',c:[
+  {t:'Levodopa ≥5 次、OFF ≥2 小時、異動 ≥1 小時'},
+  {t:'MDS 2025 有效：雙側 STN-DBS'},
+  {t:'很可能有效',c:['GPi-DBS、腸道 levodopa','皮下 foslevodopa、連續 apomorphine']}]},
+ {t:'新藥與延緩病程',c:[
+  {t:'美國已核准，台灣狀況請核對',c:['Tavapadon：D1/D5 部分致效劑','IPX203：長效 levodopa','Foslevodopa、apomorphine 輸注']},
+  {t:'延緩病程尚未確立',c:['Exenatide 第 3 期陰性','Prasinezumab 未達主要終點','Lixisenatide 需更大型試驗']}]},
+ {t:'LEDD 與台灣仿單',c:[
+  {t:'換算',c:['CR × 0.75；entacapone LD × 0.33；opicapone LD × 0.5','Safinamide 固定 150','Pramipexole × 100；ropinirole × 20；rotigotine × 30']},
+  {t:'台灣限制',c:['Entacapone 上限 2000 mg/日','Rotigotine 上限 8 mg/24h，健保每日一片','Opicapone 睡前，間隔 levodopa 與進食 1 小時']}]}
+];
+/*MAP-END*/
+if(typeof module!=='undefined')module.teach={CASES,QUIZ,MINDMAP};
+</script>
+
+<script>
 (function(){
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -666,7 +825,7 @@ function copyText(txt){
 }
 
 /* ---------------- Tabs ---------------- */
-const TABS=['dx','init','sim','ref'];
+const TABS=['dx','init','sim','ref','cases','quiz','map'];
 const TAB_KEY='parkinson-tab'; /* pages on this github.io origin share localStorage */
 function showTab(id,focus){
   TABS.forEach(t=>{
@@ -1103,8 +1262,78 @@ $('#copy-sum').addEventListener('click',()=>{
   copyText(L.join('\n'));
 });
 
+/* ================= 5–7. Teaching ================= */
+const DX_LABEL={none:'尚未符合巴金森症候群',excluded:'不診斷為巴金森病',established:'臨床確立的巴金森病',probable:'臨床很可能的巴金森病',fail:'不符合巴金森病診斷'};
+function caseOutput(c){
+  if(c.tool==='dx'){
+    const d=c.dx,k=PDE.dxClass({...d.core,ex:d.ex.length,rf:d.rf.length,sp:d.sp.length});
+    return `<b>${DX_LABEL[k]}</b><br><span class="small muted">絕對排除 ${d.ex.length}、紅旗 ${d.rf.length}、支持條件 ${d.sp.length}</span>`;
+  }
+  if(c.tool==='init'){
+    const i=c.init,r=PDE.initRank({age:i.age,func:i.impact==='func',tr:i.tremor,cog:i.cog,icd:i.icd,eds:i.eds,oh:i.oh});
+    return r.map(x=>`<div>${esc(x.n)}：<b>${x.label}</b></div>`).join('');
+  }
+  const p=c.sim.pt,a=PDE.simulate(c.sim.cur,p.years,p.wake,p.sleep),b=PDE.simulate(c.sim.prop,p.years,p.wake,p.sleep);
+  return `<div>${esc(c.plan)}</div><div class="small muted" style="margin-top:6px">模擬 OFF ${a.off.toFixed(1)} → ${b.off.toFixed(1)} 小時；異動 ${a.dy.toFixed(1)} → ${b.dy.toFixed(1)} 小時；LEDD ${PDE.ledd(c.sim.cur)} → ${PDE.ledd(c.sim.prop)} mg（示意模型）</div>`;
+}
+function renderCases(){
+  const dest={dx:'診斷流程',init:'起始治療',sim:'模擬器'};
+  $('#case-list').innerHTML=CASES.map(c=>`<article class="card case"><h3>病例 ${c.id}：${esc(c.title)} <span class="pill ev">${esc(c.tag)}</span></h3>
+    <p>${esc(c.story)}</p>
+    <div class="case-grid">
+      <div><span class="flabel">工具結果</span><div class="case-out">${caseOutput(c)}</div></div>
+      <div><span class="flabel">教學重點</span><ul class="plain">${c.points.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+    </div>
+    <button type="button" class="btn" data-case="${c.id}">帶入${dest[c.tool]}</button></article>`).join('');
+  document.querySelectorAll('[data-case]').forEach(b=>b.addEventListener('click',()=>loadCase(+b.dataset.case)));
+}
+function loadCase(id){
+  const c=CASES.find(x=>x.id===id);
+  if(c.tool==='dx'){
+    DX.core={...c.dx.core};DX.ex=new Set(c.dx.ex);DX.rf=new Set(c.dx.rf);DX.sp=new Set(c.dx.sp);
+    const t=$('#dx-sample');t.textContent=`病例 ${c.id}`;t.hidden=false;
+    buildDx();renderDx();
+  }else if(c.tool==='init'){
+    const i=c.init;$('#i-age').value=i.age;I.impact=i.impact;
+    document.querySelectorAll('#i-impact button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===i.impact?'true':'false'));
+    [['#i-tremor','tremor'],['#i-cog','cog'],['#i-icd','icd'],['#i-eds','eds'],['#i-oh','oh']].forEach(([s,k])=>{$(s).checked=i[k];});
+    renderInit();
+  }else{
+    S.pt={...c.sim.pt};S.cur={...c.sim.cur};S.prop={...c.sim.prop};S.probs=new Set(c.sim.probs);
+    S.propTouched=true;S.applied.clear();S.view='cur';
+    fillPt();buildProbChips();setView('cur');
+  }
+  showTab(c.tool);window.scrollTo(0,0);toast(`已帶入病例 ${c.id}`);
+}
+const QZ={};
+function quizScore(){
+  const done=Object.keys(QZ),ok=done.filter(k=>QUIZ.find(q=>q.id===k).a===QZ[k]).length;
+  $('#quiz-score').innerHTML=`已答 <b>${done.length}</b>/${QUIZ.length}，答對 <b>${ok}</b>`;
+}
+function renderQuiz(){
+  let html='',lv='',no=0;
+  QUIZ.forEach(q=>{
+    if(q.lv!==lv){lv=q.lv;no=0;html+=`<h2 class="quiz-sec">${lv}題</h2>`;}
+    no++;
+    const ans=QZ[q.id],done=ans!==undefined;
+    html+=`<div class="card q"><div class="q-t"><span class="no">${no}.</span>${esc(q.q)}</div><div class="q-opts">${q.o.map((t,i)=>{
+      const cls=!done?'':i===q.a?' ok':i===ans?' bad':'';
+      return `<button type="button" class="q-opt${cls}" data-q="${q.id}" data-i="${i}"${done?' disabled':''}><b>${'ABCD'[i]}</b><span>${esc(t)}</span></button>`;}).join('')}</div>
+      ${done?`<div class="q-exp"><strong>${ans===q.a?'答對':'答錯，正確答案 '+'ABCD'[q.a]}。</strong>${esc(q.e)} <span class="small">（${esc(q.s)}）</span></div>`:''}</div>`;
+  });
+  $('#quiz-list').innerHTML=html;
+  document.querySelectorAll('.q-opt:not(:disabled)').forEach(b=>b.addEventListener('click',()=>{
+    const y=window.scrollY;QZ[b.dataset.q]=+b.dataset.i;renderQuiz();window.scrollTo(0,y);}));
+  quizScore();
+}
+$('#quiz-reset').addEventListener('click',()=>{for(const k in QZ)delete QZ[k];renderQuiz();window.scrollTo(0,0);toast('已清除作答');});
+function renderMap(){
+  const node=n=>typeof n==='string'?`<li><span>${esc(n)}</span></li>`:`<li><span>${n.c?'<b>'+esc(n.t)+'</b>':esc(n.t)}</span>${n.c?`<ul>${n.c.map(node).join('')}</ul>`:''}</li>`;
+  $('#map-tree').innerHTML=MINDMAP.map(b=>`<div class="card mm-b"><h3>${esc(b.t)}</h3><ul>${b.c.map(node).join('')}</ul></div>`).join('');
+}
+
 /* ---- init ---- */
-buildDx();renderDx();renderInit();buildProbChips();fillPt();
+buildDx();renderDx();renderInit();buildProbChips();fillPt();renderCases();renderQuiz();renderMap();
 S.prop={...S.cur};fractionate(S.prop,0.75);S.applied.add('frac'); /* sample proposal: replaced as soon as the current regimen is edited */
 showTab(startTab);
 if(startTab!=='sim')renderSim();

@@ -2,10 +2,12 @@
 const fs = require('fs'), path = require('path'), vm = require('vm'), assert = require('assert');
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 const m = html.match(/\/\*ENGINE-START\*\/([\s\S]*?)\/\*ENGINE-END\*\//);
-assert(m, 'engine block not found');
+const mt = html.match(/\/\*CASES-START\*\/([\s\S]*?)\/\*MAP-END\*\/\s*(if\(typeof module[^\n]*)/);
+assert(m && mt, 'engine or teaching block not found');
 const sandbox = { module: {} };
-vm.runInNewContext(m[1], sandbox);
+vm.runInNewContext(m[1] + mt[1] + mt[2], sandbox);
 const E = sandbox.module.exports;
+const { CASES, QUIZ, MINDMAP } = sandbox.module.teach;
 
 let n = 0;
 const t = (name, fn) => { try { fn(); n++; } catch (e) { console.error('FAIL', name, '\n  ', e.message); process.exitCode = 1; } };
@@ -139,5 +141,72 @@ t('blank age is not treated as young', () => {
 // --- misc
 t('fmtT', () => { assert.equal(E.fmtT(7.5), '07:30'); assert.equal(E.fmtT(25), '01:00'); assert.equal(E.fmtT(7.999), '08:00'); assert.equal(E.fmtT(24), '00:00'); });
 t('amantadine renal caps', () => assert.deepEqual(['n', 'm', 's'].map(E.amMax), [300, 100, 0]));
+
+// --- cases: stated teaching points must match what the engine computes
+const dxc = c => E.dxClass({ ...c.dx.core, ex: c.dx.ex.length, rf: c.dx.rf.length, sp: c.dx.sp.length });
+const cs = id => CASES.find(c => c.id === id);
+const simc = (c, r) => E.simulate(c.sim[r], c.sim.pt.years, c.sim.pt.wake, c.sim.pt.sleep);
+t('6 cases with unique ids', () => { assert.equal(CASES.length, 6); assert.equal(new Set(CASES.map(c => c.id)).size, 6); });
+t('case 1 is clinically established', () => assert.equal(dxc(cs(1)), 'established'));
+t('case 2 fails on 3 red flags', () => { assert.equal(dxc(cs(2)), 'fail'); assert.equal(cs(2).dx.rf.length, 3); });
+t('case 3: levodopa first, agonist not advised, anticholinergic optional', () => {
+  const i = cs(3).init, l = E.initRank({ age: i.age, func: true, tr: i.tremor, cog: i.cog, icd: i.icd, eds: i.eds, oh: i.oh });
+  assert(l[0].n.startsWith('Levodopa')); assert.equal(row(l, '致效劑').label, '不建議'); assert.equal(row(l, '抗膽鹼').label, '可選');
+});
+t('case 4: proposal lowers both OFF and dyskinesia', () => {
+  const c = cs(4), a = simc(c, 'cur'), b = simc(c, 'prop');
+  assert(b.off < a.off, `off ${a.off} ${b.off}`); assert(b.dy < a.dy, `dy ${a.dy} ${b.dy}`);
+  assert(c.sim.pt.offh >= 2 && c.sim.pt.dyskh >= 1);
+  assert(c.sim.prop.ld * c.sim.prop.n < c.sim.cur.ld * c.sim.cur.n, 'levodopa total falls');
+  assert(E.ledd(c.sim.prop) > E.ledd(c.sim.cur), 'LEDD rises through amantadine');
+  const opi = E.simulate({ ...c.sim.cur, ld: 125, n: 5, int: 3, comt: 'opi' }, 8, 7, 23);
+  assert(opi.dy > a.dy, 'stated opicapone comparison');
+});
+t('case 5: agonist removed, LEDD about equal, OFF stays modest', () => {
+  const c = cs(5); assert.equal(E.ledd(c.sim.cur), 600); assert.equal(E.ledd(c.sim.prop), 625); assert.equal(c.sim.prop.da, 'none');
+  assert(simc(c, 'prop').off < 2); assert.equal(simc(c, 'prop').dy, 0);
+  near(E.simulate({ ...c.sim.prop, ld: 150, n: 3, int: 5 }, 6, 7, 23).off, 6.5, .06);
+});
+t('case 6: story says no dyskinesia, model agrees', () => { assert.equal(simc(cs(6), 'cur').dy, 0); assert.equal(simc(cs(6), 'prop').dy, 0); });
+t('case 6: renal alert on current, none on proposal; anticholinergic stopped', () => {
+  const c = cs(6), w = r => E.regWarnings(c.sim[r], c.sim.pt).map(x => x.t).join();
+  assert(w('cur').includes('腎功能')); assert(!w('prop').includes('腎功能')); assert.equal(c.sim.prop.ach, 0);
+});
+t('case regimens are already within input limits', () => CASES.filter(c => c.sim).forEach(c => ['cur', 'prop'].forEach(r => {
+  assert.deepEqual(E.normalize({ ...c.sim[r] }), c.sim[r]);
+  assert(!E.regWarnings(c.sim[r], c.sim.pt).some(x => x.t.includes('就寢')));
+})));
+
+// --- quiz
+const qz = id => QUIZ.find(q => q.id === id);
+t('20 questions, 10 basic + 10 advanced', () => {
+  assert.equal(QUIZ.length, 20); assert.equal(QUIZ.filter(q => q.lv === '基礎').length, 10); assert.equal(QUIZ.filter(q => q.lv === '高階').length, 10);
+  assert.equal(new Set(QUIZ.map(q => q.id)).size, 20);
+});
+t('answers are spread A-D 5 each', () => [0, 1, 2, 3].forEach(i => assert.equal(QUIZ.filter(q => q.a === i).length, 5)));
+t('each question has 4 distinct options, an explanation and a source', () => QUIZ.forEach(q => {
+  assert.equal(new Set(q.o).size, 4, q.id); assert(q.e && q.s, q.id); assert(q.a >= 0 && q.a < 4, q.id);
+}));
+t('the correct option is not a giveaway by length', () => {
+  const longest = QUIZ.filter(q => q.o[q.a].length > Math.max(...q.o.filter((_, i) => i !== q.a).map(x => x.length)));
+  assert(longest.length <= 5, longest.map(q => q.id).join());
+});
+const parseMg = s => parseInt(s, 10);
+t('b5 matches engine', () => assert.equal(parseMg(qz('b5').o[qz('b5').a]), E.ledd(reg({ da: 'rop', dadose: 8 }))));
+t('a2 matches engine', () => assert.equal(parseMg(qz('a2').o[qz('a2').a]), E.ledd(reg({ cr: 200, comt: 'opi', maob: 'saf50' }))));
+t('a1 matches engine', () => { assert.equal(dx({ rf: 2, sp: 1 }), 'fail'); assert(qz('a1').o[qz('a1').a].includes('不符合')); });
+t('a3 matches engine', () => { assert.equal(E.MAOB.saf50.led, 150); assert.equal(E.MAOB.saf100.led, 150); assert(qz('a3').o[qz('a3').a].includes('150')); });
+t('b2 option C is the established rule', () => assert.equal(dx({ rf: 0, sp: 2 }), 'established'));
+
+// --- mind map
+t('mind map has branches and no empty node', () => {
+  assert(MINDMAP.length >= 6);
+  const walk = n => { if (typeof n === 'string') return assert(n.length); assert(n.t); (n.c || []).forEach(walk); };
+  MINDMAP.forEach(walk);
+});
+t('mind map limits match the engine', () => {
+  const txt = JSON.stringify(MINDMAP);
+  assert(txt.includes('上限 ' + E.DA.rot.max + ' mg/24h')); assert(txt.includes('固定 ' + E.MAOB.saf50.led));
+});
 
 console.log(`${n} passed${process.exitCode ? ', with failures' : ''}`);
